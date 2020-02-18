@@ -11,7 +11,6 @@
 
 URTSAttackOrder::URTSAttackOrder()
 {
-    TargetType = ERTSTargetType::ACTOR;
     bIsCreatingIndividualTargetLocations = true;
 
     TagRequirements.SourceRequiredTags.AddTag(URTSGlobalTags::Status_Permanent_CanAttack());
@@ -36,7 +35,7 @@ void URTSAttackOrder::CreateIndividualTargetLocations(const TArray<AActor*>& Ord
 
 float URTSAttackOrder::GetRequiredRange(const AActor* OrderedActor, int32 Index) const
 {
-    return URTSAbilitySystemHelper::GetAttributeValue(OrderedActor, URTSAttackAttributeSet::RangeAttribute());
+    return URTSAbilitySystemHelper::GetAttributeValue(OrderedActor, URTSAttackAttributeSet::GetRangeAttribute());
 }
 
 float URTSAttackOrder::GetTargetScore(const AActor* OrderedActor, const FRTSOrderTargetData& TargetData,

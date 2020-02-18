@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/RTSGlobalTags.h"
 #include "Orders/RTSOrderProcessPolicy.h"
+#include "RTSUtilities.h"
 
 
 URTSOrder::URTSOrder()
@@ -12,6 +13,11 @@ URTSOrder::URTSOrder()
 
 bool URTSOrder::CanObeyOrder(const AActor* OrderedActor, int32 Index,
                              FRTSOrderErrorTags* OutErrorTags /*= nullptr*/) const
+{
+    return true;
+}
+
+bool URTSOrder::CanObeyOrder(const AActor* OrderedActor, const FRTSOrderData& OrderData, FRTSOrderErrorTags* OutErrorTags) const
 {
     return true;
 }
@@ -42,9 +48,14 @@ void URTSOrder::OrderCanceled(AActor* OrderedActor, const FRTSOrderTargetData& T
 {
 }
 
-ERTSTargetType URTSOrder::GetTargetType(const AActor* OrderedActor, int32 Index) const
+bool URTSOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, int32 InFlag) const
 {
-    return ERTSTargetType::NONE;
+    return false;
+}
+
+bool URTSOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const
+{
+    return false;
 }
 
 bool URTSOrder::IsCreatingIndividualTargetLocations(const AActor* OrderedActor, int32 Index) const
@@ -94,7 +105,7 @@ bool URTSOrder::HasFixedOrderButtonIndex() const
 
 FRTSOrderPreviewData URTSOrder::GetOrderPreviewData(const AActor* OrderedActor, int32 Index) const
 {
-    return FRTSOrderPreviewData();
+    return OrderPreviewData;
 }
 
 void URTSOrder::GetTagRequirements(const AActor* OrderedActor, int32 Index,
@@ -142,11 +153,14 @@ float URTSOrder::GetTargetScore(const AActor* OrderedActor, const FRTSOrderTarge
     if (IsValid(TargetData.Actor))
     {
         // Subtract the half collision size of the target from the distance.
-        // TODO: This is only relevant for melee units and should be ignored for ranged units.
         Distance = FVector::Dist2D(OrderedActor->GetActorLocation(), TargetData.Actor->GetActorLocation());
 
-        // NOTE(np): In A Year Of Rain, unit collision radius is deducted from range to account for different unit sizes.
-        //Distance -= URTSUtilities::GetActorCollisionSize(TargetData.Actor) / 2.0f;
+		// TODO: This is only relevant for melee units and should be ignored for ranged units.
+		bool bIsMeleeUnit = true;
+		if (bIsMeleeUnit)
+		{
+			Distance -= URTSUtilities::GetActorCollisionSize(TargetData.Actor) / 2.0f;
+		}
     }
 
     else

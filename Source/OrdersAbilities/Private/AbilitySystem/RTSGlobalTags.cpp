@@ -20,6 +20,12 @@ const FGameplayTag& URTSGlobalTags::Status_Permanent_CanAttack()
     return Tag;
 }
 
+const FGameplayTag& URTSGlobalTags::Status_Permanent_CanBeAttacked()
+{
+	static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Status.Permanent.CanBeAttacked")));
+	return Tag;
+}
+
 const FGameplayTag& URTSGlobalTags::Status_Permanent_CanRepair()
 {
     static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Status.Permanent.CanRepair")));
@@ -83,6 +89,12 @@ const FGameplayTag& URTSGlobalTags::Status_Permanent_Summoned()
 const FGameplayTag& URTSGlobalTags::Status_Permanent_HasInventory()
 {
     static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Status.Permanent.HasInventory")));
+    return Tag;
+}
+
+const FGameplayTag& URTSGlobalTags::Status_Permanent_HasStats()
+{
+    static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Status.Permanent.HasStats")));
     return Tag;
 }
 
@@ -349,6 +361,24 @@ const FGameplayTag& URTSGlobalTags::Event_OnHitEffect()
 const FGameplayTag& URTSGlobalTags::Event_Attack()
 {
     static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Event.Attack")));
+    return Tag;
+}
+
+const FGameplayTag& URTSGlobalTags::Event_OrderAbility()
+{
+	static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Event.OrderAbility")));
+	return Tag;
+}
+
+const FGameplayTag& URTSGlobalTags::Event_OnKilled()
+{
+	static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Event.OnKilled")));
+	return Tag;
+}
+
+const FGameplayTag& URTSGlobalTags::Event_OnLevelUp()
+{
+    static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Event.OnLevelUp")));
     return Tag;
 }
 

@@ -1,10 +1,12 @@
 #include "Orders/RTSOrderHelper.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
 #include "AbilitySystemComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/HUD.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Templates/Tuple.h"
 
@@ -14,7 +16,23 @@
 #include "Orders/RTSOrderComponent.h"
 #include "Orders/RTSOrderTargetData.h"
 #include "Orders/RTSOrderWithBehavior.h"
+#include "Components/CapsuleComponent.h"
 
+
+URTSOrder* URTSOrderHelper::GetDefaultOrder(TSoftClassPtr<URTSOrder> OrderType)
+{
+    if (OrderType == nullptr)
+	{
+		return nullptr;
+	}
+
+	if (!OrderType.IsValid())
+	{
+	    OrderType.LoadSynchronous();
+	}
+
+	return OrderType->GetDefaultObject<URTSOrder>();
+}
 
 bool URTSOrderHelper::CanObeyOrder(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor, int32 Index)
 {
@@ -35,7 +53,6 @@ bool URTSOrderHelper::K2_CanObeyOrderWithErrorTags(TSoftClassPtr<URTSOrder> Orde
 bool URTSOrderHelper::CanObeyOrder(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor, int32 Index,
                                    FRTSOrderErrorTags* OutErrorTags)
 {
-
     if (OrderType == nullptr || !IsValid(OrderedActor))
     {
         return false;
@@ -55,7 +72,7 @@ bool URTSOrderHelper::CanObeyOrder(TSoftClassPtr<URTSOrder> OrderType, const AAc
 
         FGameplayTagContainer OrderedActorTags;
         AbilitySystem->GetOwnedGameplayTags(OrderedActorTags);
-
+    	
         if (OutErrorTags != nullptr)
         {
             if (!URTSAbilitySystemHelper::DoesSatisfyTagRequirementsWithResult(
@@ -76,6 +93,50 @@ bool URTSOrderHelper::CanObeyOrder(TSoftClassPtr<URTSOrder> OrderType, const AAc
     }
 
     return Order->CanObeyOrder(OrderedActor, Index, OutErrorTags);
+}
+
+bool URTSOrderHelper::CanObeyOrder(const AActor* OrderedActor, const FRTSOrderData& OrderData, FRTSOrderErrorTags* OutErrorTags)
+{
+    if (OrderData.OrderType == nullptr || !IsValid(OrderedActor))
+    {
+        return false;
+    }
+
+    if (!OrderData.OrderType.IsValid())
+    {
+        OrderData.OrderType.LoadSynchronous();
+    }
+
+    const URTSOrder* Order = OrderData.OrderType->GetDefaultObject<URTSOrder>();
+    const UAbilitySystemComponent* AbilitySystem = OrderedActor->FindComponentByClass<UAbilitySystemComponent>();
+    if (AbilitySystem != nullptr)
+    {
+        FRTSOrderTagRequirements TagRequirements;
+        Order->GetTagRequirements(OrderedActor, OrderData.Index, TagRequirements);
+
+        FGameplayTagContainer OrderedActorTags;
+        AbilitySystem->GetOwnedGameplayTags(OrderedActorTags);
+
+        if (OutErrorTags != nullptr)
+        {
+            if (!URTSAbilitySystemHelper::DoesSatisfyTagRequirementsWithResult(
+                OrderedActorTags, TagRequirements.SourceRequiredTags, TagRequirements.SourceBlockedTags,
+                OutErrorTags->MissingTags, OutErrorTags->BlockingTags))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!URTSAbilitySystemHelper::DoesSatisfyTagRequirements(
+                OrderedActorTags, TagRequirements.SourceRequiredTags, TagRequirements.SourceBlockedTags))
+            {
+                return false;
+            }
+        }
+    }
+
+    return Order->CanObeyOrder(OrderedActor, OrderData, OutErrorTags);
 }
 
 bool URTSOrderHelper::IsValidTarget(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor,
@@ -112,16 +173,17 @@ bool URTSOrderHelper::IsValidTarget(TSoftClassPtr<URTSOrder> OrderType, const AA
 
     const URTSOrder* Order = OrderType->GetDefaultObject<URTSOrder>();
 
-    ERTSTargetType TargetType = Order->GetTargetType(OrderedActor, Index);
-    if (TargetType == ERTSTargetType::ACTOR)
+    bool bAllowLocation = TargetData.bUseLocation && Order->IsTargetTypeFlagChecked(OrderedActor, Index, ERTSTargetTypeFlags::LOCATION | ERTSTargetTypeFlags::DIRECTION);
+	
+    if (!TargetData.bUseLocation && Order->IsTargetTypeFlagChecked(OrderedActor, Index, ERTSTargetTypeFlags::ACTOR))
     {
         if (!IsValid(TargetData.Actor))
         {
-            if (OutErrorTags != nullptr)
+            if (!bAllowLocation && OutErrorTags != nullptr)
             {
                 OutErrorTags->ErrorTags.AddTag(URTSGlobalTags::AbilityActivationFailure_NoTarget());
             }
-            return false;
+            return bAllowLocation ? Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags) : false;
         }
 
         FRTSOrderTagRequirements TagRequirements;
@@ -133,21 +195,20 @@ bool URTSOrderHelper::IsValidTarget(TSoftClassPtr<URTSOrder> OrderType, const AA
                     TargetData.TargetTags, TagRequirements.TargetRequiredTags, TagRequirements.TargetBlockedTags,
                     OutErrorTags->MissingTags, OutErrorTags->BlockingTags))
             {
-                return false;
+                return bAllowLocation ? Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags) : false;
             }
         }
-
         else
         {
             if (!URTSAbilitySystemHelper::DoesSatisfyTagRequirements(
                     TargetData.TargetTags, TagRequirements.TargetRequiredTags, TagRequirements.TargetBlockedTags))
             {
-                return false;
+                return bAllowLocation ? Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags) : false;
             }
         }
     }
 
-    return Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags);
+	return Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags);
 }
 
 void URTSOrderHelper::CreateIndividualTargetLocations(TSoftClassPtr<URTSOrder> OrderType,
@@ -250,12 +311,11 @@ void URTSOrderHelper::InsertOrderAfterCurrentOrder(AActor* OrderedActor, const F
     OrderComponent->InsertOrderAfterCurrentOrder(Order);
 }
 
-ERTSTargetType URTSOrderHelper::GetTargetType(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor,
-                                              int32 Index)
+bool URTSOrderHelper::IsTargetTypeFlagChecked(TSoftClassPtr<URTSOrder> OrderType, ERTSTargetTypeFlags InFlag, const AActor* OrderedActor, int32 Index)
 {
     if (OrderType == nullptr)
     {
-        return ERTSTargetType::NONE;
+        return false;
     }
 
     if (!OrderType.IsValid())
@@ -263,7 +323,7 @@ ERTSTargetType URTSOrderHelper::GetTargetType(TSoftClassPtr<URTSOrder> OrderType
         OrderType.LoadSynchronous();
     }
 
-    return OrderType->GetDefaultObject<URTSOrder>()->GetTargetType(OrderedActor, Index);
+    return OrderType->GetDefaultObject<URTSOrder>()->IsTargetTypeFlagChecked(OrderedActor, Index, InFlag);
 }
 
 bool URTSOrderHelper::IsCreatingIndividualTargetLocations(TSoftClassPtr<URTSOrder> OrderType,
@@ -313,11 +373,10 @@ bool URTSOrderHelper::ShouldRestartBehaviourTree(TSoftClassPtr<URTSOrderWithBeha
 }
 
 FRTSOrderTargetData URTSOrderHelper::CreateOrderTargetData(const AActor* OrderedActor, AActor* TargetActor,
-                                                           const FVector2D& TargetLocation)
+                                                           const FVector2D& TargetLocation, bool bUseLocation)
 {
-    FRTSOrderTargetData TargetData;
-    TargetData.Actor = TargetActor;
-    TargetData.Location = TargetLocation;
+    FRTSOrderTargetData TargetData(TargetActor, TargetLocation);
+    TargetData.bUseLocation = bUseLocation;
 
     if (TargetActor == nullptr)
     {
@@ -330,6 +389,11 @@ FRTSOrderTargetData URTSOrderHelper::CreateOrderTargetData(const AActor* Ordered
 
     TargetData.TargetTags = TargetTags;
     return TargetData;
+}
+
+FRTSOrderTargetData URTSOrderHelper::CreateOrderTargetData(const AActor* OrderedActor, const FRTSOrderData& OrderData)
+{
+    return CreateOrderTargetData(OrderedActor, OrderData.Target, OrderData.Location, OrderData.bUseLocation);
 }
 
 UTexture2D* URTSOrderHelper::GetNormalIcon(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor /*= nullptr*/,
@@ -766,7 +830,7 @@ FRTSOrderErrorTags URTSOrderHelper::CheckOrder(AActor* OrderedActor, const FRTSO
         return OrderErrorTags;
     }
 
-    FRTSOrderTargetData TargetData = URTSOrderHelper::CreateOrderTargetData(OrderedActor, Order.Target, Order.Location);
+    FRTSOrderTargetData TargetData = URTSOrderHelper::CreateOrderTargetData(OrderedActor, Order);
     if (!URTSOrderHelper::IsValidTarget(OrderType.Get(), OrderedActor, TargetData, Order.Index, &OrderErrorTags))
     {
         return OrderErrorTags;
@@ -837,9 +901,8 @@ AActor* URTSOrderHelper::FindTargetForOrderInChaseDistance(TSoftClassPtr<URTSOrd
 
     const URTSOrder* Order = OrderType->GetDefaultObject<URTSOrder>();
 
-    // Only target types with a real target location are relevant.
-    ERTSTargetType TargetType = Order->GetTargetType(OrderedActor, Index);
-    if (TargetType == ERTSTargetType::NONE || TargetType == ERTSTargetType::PASSIVE)
+    // Only target types which supports actors is relevant.
+    if (!Order->IsTargetTypeFlagChecked(OrderedActor, Index, ERTSTargetTypeFlags::ACTOR))
     {
         return nullptr;
     }
@@ -853,7 +916,7 @@ AActor* URTSOrderHelper::FindTargetForOrderInChaseDistance(TSoftClassPtr<URTSOrd
     {
         return nullptr;
     }
-
+	
     return FindBestScoredTargetForOrder(OrderType, OrderedActor, ActorsInRange, Index, OutScore);
 }
 
@@ -878,6 +941,14 @@ void URTSOrderHelper::FindActorsInChaseDistance(UObject* WorldContextObject, flo
     UKismetSystemLibrary::CapsuleOverlapActors(WorldContextObject, OrderedActorLocation, AcquisitionRadius, 10000.0f,
                                                GameInstance->GetPawnDetectionChannels(), APawn::StaticClass(),
                                                ActorsToIgnore, ActorsInRange);*/
+
+
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery3); // pawn object type only
+	
+	UKismetSystemLibrary::CapsuleOverlapActors(WorldContextObject, OrderedActorLocation, AcquisitionRadius, 10000.0f,
+		ObjectTypes, AActor::StaticClass(),
+		ActorsToIgnore, ActorsInRange);
 
     if (ActorsInRange.Num() == 0)
     {
@@ -936,6 +1007,8 @@ AActor* URTSOrderHelper::FindBestScoredTargetForOrder(TSoftClassPtr<URTSOrder> O
             continue;
         }
 
+        UE_LOG(LogTemp, Warning, TEXT("Scoring actor %s"), *Actor->GetName());
+
         // Check the target tags.
         FGameplayTagContainer TargetTags;
         URTSAbilitySystemHelper::GetTags(Actor, TargetTags);
@@ -969,6 +1042,38 @@ AActor* URTSOrderHelper::FindBestScoredTargetForOrder(TSoftClassPtr<URTSOrder> O
 
     OutScore = HighestScoredActor.Get<1>();
     return HighestScoredActor.Get<0>();
+}
+
+FVector2D URTSOrderHelper::GetActorCenterOnScreen(AActor* Actor) const
+{
+	AHUD* HUD = Actor->GetWorld()->GetFirstPlayerController()->GetHUD();
+	FVector ProjectedLocation = HUD->Project(Actor->GetActorLocation());
+	return FVector2D(ProjectedLocation.X, ProjectedLocation.Y);
+}
+
+FVector2D URTSOrderHelper::GetActorSizeOnScreen(AActor* Actor) const
+{
+	// Get actor position projected on HUD.
+	UCapsuleComponent* CapsuleComponent = Actor->FindComponentByClass<UCapsuleComponent>();
+
+	if (!CapsuleComponent)
+	{
+		return FVector2D::ZeroVector;
+	}
+
+	AHUD* HUD = Actor->GetWorld()->GetFirstPlayerController()->GetHUD();
+	
+	FCollisionShape CollisionShape = CapsuleComponent->GetCollisionShape();
+
+	FVector ActorTopPosition = HUD->Project(Actor->GetActorLocation() + (Actor->GetActorForwardVector() * CollisionShape.Capsule.HalfHeight));
+	FVector ActorBottomPosition = HUD->Project(Actor->GetActorLocation() - (Actor->GetActorForwardVector() * CollisionShape.Capsule.HalfHeight));
+	FVector ActorLeftPosition = HUD->Project(Actor->GetActorLocation() - (Actor->GetActorRightVector() * CollisionShape.Capsule.Radius));
+	FVector ActorRightPosition = HUD->Project(Actor->GetActorLocation() + (Actor->GetActorRightVector() * CollisionShape.Capsule.Radius));
+
+	float Width = FVector(ActorRightPosition - ActorLeftPosition).Size();
+	float Height = FVector(ActorTopPosition - ActorBottomPosition).Size();
+
+	return FVector2D(Width, Height);
 }
 
 AActor* URTSOrderHelper::FindMostSuitableActorToObeyTheOrder(TSoftClassPtr<URTSOrder> OrderType,

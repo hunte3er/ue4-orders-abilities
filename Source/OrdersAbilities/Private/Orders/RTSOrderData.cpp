@@ -43,11 +43,11 @@ FRTSOrderData::FRTSOrderData(TSoftClassPtr<URTSOrder> InOrderType, FVector2D InL
 
 FRTSOrderData::FRTSOrderData(TSoftClassPtr<URTSOrder> InOrderType, AActor* InTarget, FVector2D InLocation)
     : OrderType(InOrderType)
-    , bUseLocation(true)
     , Location(InLocation)
     , Target(InTarget)
     , Index(-1)
 {
+    bUseLocation = Target == nullptr;
 }
 
 FRTSOrderData::FRTSOrderData(TSoftClassPtr<URTSOrder> InOrderType, int32 InIndex)

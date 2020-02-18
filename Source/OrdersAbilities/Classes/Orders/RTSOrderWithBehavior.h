@@ -19,7 +19,7 @@ public:
     URTSOrderWithBehavior();
 
     /** Gets the behavior tree that should run in order to obey this order. */
-    UBehaviorTree* GetBehaviorTree() const;
+    virtual UBehaviorTree* GetBehaviorTree() const;
 
     /** Whether to restart the behavior tree whenever a new order of this type is issued. */
     bool ShouldRestartBehaviourTree() const;
@@ -31,11 +31,12 @@ public:
                                               float& OutAcquisitionRadius) const override;
     //~ End URTSOrder Interface
 
+protected:
+	/** The behavior tree that should run in order to obey this order. */
+	UPROPERTY(Category = "RTS Behavior", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UBehaviorTree* BehaviorTree;
+	
 private:
-    /** The behavior tree that should run in order to obey this order. */
-    UPROPERTY(Category = "RTS Behavior", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    UBehaviorTree* BehaviorTree;
-
     /** Whether to restart the behavior tree whenever a new order of this type is issued. */
     UPROPERTY(Category = "RTS Behavior", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bShouldRestartBehaviourTree;

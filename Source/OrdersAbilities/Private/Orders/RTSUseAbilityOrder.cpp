@@ -1,11 +1,11 @@
 #include "Orders/RTSUseAbilityOrder.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "GameplayAbility.h"
-#include "GameplayAbilityTargetTypes.h"
+#include "Abilities/GameplayAbility.h"
+#include "Abilities/GameplayAbilityTargetTypes.h"
 #include "GameFramework/Actor.h"
 
 #include "AbilitySystem/RTSAbilitySystemComponent.h"
@@ -69,22 +69,22 @@ bool URTSUseAbilityOrder::CanObeyOrder(const AActor* OrderedActor, int32 Index,
     return false;
 }
 
-ERTSTargetType URTSUseAbilityOrder::GetTargetType(const AActor* OrderedActor, int32 Index) const
+bool URTSUseAbilityOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const
 {
-    if (OrderedActor == nullptr)
-    {
-        return ERTSTargetType::NONE;
-    }
+	if (OrderedActor == nullptr)
+	{
+		return false;
+	}
 
-    const URTSAbilitySystemComponent* AbilitySystem = OrderedActor->FindComponentByClass<URTSAbilitySystemComponent>();
-    URTSGameplayAbility* Ability = Cast<URTSGameplayAbility>(GetAbility(AbilitySystem, Index));
+     const URTSAbilitySystemComponent* AbilitySystem = OrderedActor->FindComponentByClass<URTSAbilitySystemComponent>();
+     URTSGameplayAbility* Ability = Cast<URTSGameplayAbility>(GetAbility(AbilitySystem, Index));
 
-    if (Ability != nullptr)
-    {
-        return Ability->GetTargetType();
-    }
+     if (Ability != nullptr)
+     {
+         return Ability->IsTargetTypeFlagChecked(InFlag);
+     }
 
-    return ERTSTargetType::NONE;
+     return false;
 }
 
 void URTSUseAbilityOrder::IssueOrder(AActor* OrderedActor, const FRTSOrderTargetData& TargetData, int32 Index,
@@ -213,8 +213,8 @@ ERTSOrderProcessPolicy URTSUseAbilityOrder::GetOrderProcessPolicy(const AActor* 
 
     // If this ability does not have a target type or location and is instant we can execute it here directly without
     // altering the AI behavior.
-    if ((Ability->GetTargetType() == ERTSTargetType::NONE || Ability->GetTargetType() == ERTSTargetType::PASSIVE) &&
-        AbilityProcessPolicy == ERTSAbilityProcessPolicy::INSTANT)
+	if (!Ability->IsTargetTypeFlagChecked(ERTSTargetTypeFlags::ACTOR | ERTSTargetTypeFlags::LOCATION | ERTSTargetTypeFlags::DIRECTION)
+        && AbilityProcessPolicy == ERTSAbilityProcessPolicy::INSTANT)
     {
         return ERTSOrderProcessPolicy::INSTANT;
     }
@@ -420,7 +420,8 @@ float URTSUseAbilityOrder::GetRequiredRange(const AActor* OrderedActor, int32 In
 
 UGameplayAbility* URTSUseAbilityOrder::GetAbility(const URTSAbilitySystemComponent* AbilitySystem, int32 Index) const
 {
-    const TArray<TSubclassOf<UGameplayAbility>>& Abilities = AbilitySystem->GetInitialAndUnlockableAbilities();
+    //const TArray<TSubclassOf<UGameplayAbility>>& Abilities = AbilitySystem->GetInitialAndUnlockableAbilities();
+    TArray<TSubclassOf<UGameplayAbility>> Abilities = URTSAbilitySystemHelper::GetOrderAbilities(AbilitySystem);
 
     if (Abilities.IsValidIndex(Index) && Abilities[Index] != nullptr)
     {

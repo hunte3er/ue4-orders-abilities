@@ -19,7 +19,14 @@ public class OrdersAbilities : ModuleRules
                 "AIModule",
                 "GameplayAbilities",
                 "GameplayTags",
-                "GameplayTasks"
+                "GameplayTasks",
+
+                "UMG",
+                "Slate",
+                "SlateCore",
+                "RHI",
+                "RenderCore",
+                "Landscape"
             });
 	}
 }

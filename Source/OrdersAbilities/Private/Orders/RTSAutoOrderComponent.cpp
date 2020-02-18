@@ -1,8 +1,8 @@
 #include "Orders/RTSAutoOrderComponent.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
-#include "UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
@@ -10,13 +10,15 @@
 #include "Orders/RTSAutoOrderProvider.h"
 #include "Orders/RTSOrderHelper.h"
 #include "Orders/RTSOrderComponent.h"
+#include "RTSOwnerComponent.h"
+#include "RTSUtilities.h"
 
 DECLARE_CYCLE_STAT(TEXT("RTS - Auto Order Target Acquisition"), STAT_RTSAutoOrderTargetAcquisition, STATGROUP_RTS);
 
 
 URTSAutoOrderComponent::URTSAutoOrderComponent()
 {
-    SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 
     bCheckAutoOrders = false;
 }
@@ -150,13 +152,12 @@ void URTSAutoOrderComponent::BeginPlay()
     // Listen for the appropriate order to enable auto orders.
     OrderComponent->OnOrderChanged.AddDynamic(this, &URTSAutoOrderComponent::OnOrderChanged);
 
-    // NOTE(np): In A Year Of Rain, units can change their owner at runtime (e.g. rescued units in story campaign).
-    //URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
-    //if (OwnerComponent != nullptr)
-    //{
-    //    // Listen for owner changes.
-    //    OwnerComponent->OnOwnerChanged.AddDynamic(this, &URTSAutoOrderComponent::OnOwnerChanged);
-    //}
+    URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
+    if (OwnerComponent != nullptr)
+    {
+        // Listen for owner changes.
+        OwnerComponent->OnOwnerChanged.AddDynamic(this, &URTSAutoOrderComponent::OnOwnerChanged);
+    }
 
     if (bHasAutoCastOrders && URTSOrderHelper::AreAutoOrdersAllowedDuringOrder(OrderComponent->GetCurrentOrderType()))
     {
@@ -183,8 +184,7 @@ void URTSAutoOrderComponent::CheckAutoOrders()
     AActor* Owner = GetOwner();
 
     // NOTE(np): A Year Of Rain distingushes between auto orders for human and AI.
-    //bool bIsAIUnit = URTSUtilities::IsAIUnit(Owner);
-    bool bIsAIUnit = false;
+    bool bIsAIUnit = URTSUtilities::IsAIUnit(Owner);
 
     {
         SCOPE_CYCLE_COUNTER(STAT_RTSAutoOrderTargetAcquisition);
@@ -267,40 +267,67 @@ bool URTSAutoOrderComponent::IssueAutoOrder(const FRTSOrderTypeWithIndex& Order)
         return false;
     }
 
-    ERTSTargetType TargetType = URTSOrderHelper::GetTargetType(Order.OrderType, Owner, Order.Index);
-    switch (TargetType)
-    {
-        case ERTSTargetType::NONE:
-        {
-            // TODO: Orders with no target type (this basically resolves to 'self') are only issued when their is an
-            // enemy nearby. This might not always be the case (e.g self only heal).
-            if (URTSOrderHelper::IsEnemyInAcquisitionRadius(Owner, AcquisitionRadius))
-            {
-                OrderComponent->InsertOrderBeforeCurrentOrder(FRTSOrderData(Order.OrderType, Order.Index));
-                return true;
-            }
-        }
-        break;
-        case ERTSTargetType::ACTOR:
-        case ERTSTargetType::LOCATION:
-        case ERTSTargetType::DIRECTION:
-        {
-            float Score;
-            AActor* Target =
-                URTSOrderHelper::FindTargetForOrder(Order.OrderType, Owner, Order.Index, AcquisitionRadius, Score);
-            if (Target != nullptr)
-            {
-                OrderComponent->InsertOrderBeforeCurrentOrder(
-                    FRTSOrderData(Order.OrderType, Order.Index, Target, FVector2D(Target->GetActorLocation())));
-                return true;
-            }
-        }
-        break;
-        case ERTSTargetType::PASSIVE:
-            break;
-        default:
-            break;
-    }
+    UE_LOG(LogTemp, Error, TEXT("NEED TO UPDATE THIS FOR TARGETTYPEFLAGS"));
+	
+	// @TODO Make this work with the target type flags
+   //  ERTSTargetType TargetType = URTSOrderHelper::GetTargetType(Order.OrderType, Owner, Order.Index);
+   //  switch (TargetType)
+   //  {
+   //      case ERTSTargetType::NONE:
+   //      {
+   //          // TODO: Orders with no target type (this basically resolves to 'self') are only issued when their is an
+   //          // enemy nearby. This might not always be the case (e.g self only heal).
+   //          if (URTSOrderHelper::IsEnemyInAcquisitionRadius(Owner, AcquisitionRadius))
+   //          {
+   //              OrderComponent->InsertOrderBeforeCurrentOrder(FRTSOrderData(Order.OrderType, Order.Index));
+   //              return true;
+   //          }
+   //      }
+   //      break;
+   //      case ERTSTargetType::ACTOR:
+	  //       {
+			// 	float Score;
+			// 	AActor* Target =
+			// 		URTSOrderHelper::FindTargetForOrder(Order.OrderType, Owner, Order.Index, AcquisitionRadius, Score);
+			// 	if (Target != nullptr)
+			// 	{
+			// 		UE_LOG(LogTemp, Warning, TEXT("Running auto ability: %s"), *Target->GetName());
+   //
+			// 		OrderComponent->InsertOrderBeforeCurrentOrder(
+			// 			FRTSOrderData(Order.OrderType, Order.Index, Target, FVector2D(Target->GetActorLocation())));
+			// 		return true;
+			// 	}
+	  //       }
+   //      case ERTSTargetType::LOCATION:
+	  //       {
+			// 	float Score;
+			// 	AActor* Target =
+			// 		URTSOrderHelper::FindTargetForOrder(Order.OrderType, Owner, Order.Index, AcquisitionRadius, Score);
+			// 	if (Target != nullptr)
+			// 	{
+			// 		OrderComponent->InsertOrderBeforeCurrentOrder(
+			// 			FRTSOrderData(Order.OrderType, Order.Index, Target, FVector2D(Target->GetActorLocation())));
+			// 		return true;
+			// }
+	  //       }
+   //      case ERTSTargetType::DIRECTION:
+   //      {
+   //          float Score;
+   //          AActor* Target =
+   //              URTSOrderHelper::FindTargetForOrder(Order.OrderType, Owner, Order.Index, AcquisitionRadius, Score);
+   //          if (Target != nullptr)
+   //          {
+   //              OrderComponent->InsertOrderBeforeCurrentOrder(
+   //                  FRTSOrderData(Order.OrderType, Order.Index, Target, FVector2D(Target->GetActorLocation())));
+   //              return true;
+   //          }
+   //      }
+   //      break;
+   //      case ERTSTargetType::PASSIVE:
+   //          break;
+   //      default:
+   //          break;
+   //  }
 
     return false;
 }

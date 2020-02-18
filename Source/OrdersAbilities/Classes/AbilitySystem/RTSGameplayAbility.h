@@ -1,10 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayAbility.h"
+#include "Abilities/GameplayAbility.h"
 
 #include "AttributeSet.h"
-#include "Text.h"
+#include "Internationalization/Text.h"
 
 #include "Orders/RTSOrderGroupExecutionType.h"
 #include "Orders/RTSOrderPreviewData.h"
@@ -66,7 +66,8 @@ public:
     URTSGameplayAbility(const FObjectInitializer& ObjectInitializer);
 
     /** Gets the target type of this ability. */
-    ERTSTargetType GetTargetType() const;
+    uint8 GetTargetTypeFlags() const { return TargetTypeFlags; }
+    bool IsTargetTypeFlagChecked(ERTSTargetTypeFlags InFlag) const;
 
     /** Gets the group execution type this ability. */
     ERTSOrderGroupExecutionType GetGroupExecutionType() const;
@@ -170,13 +171,18 @@ public:
     bool AreAbilityTasksActive() const;
 
     //~ Begin UGameplayAbility Interface
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
     virtual bool ShouldActivateAbility(ENetRole Role) const override;
     virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
     virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
     //~ End UGameplayAbility Interface
 
 protected:
-    /**
+    /** Does each actor store an instance of this ability. */
+    UPROPERTY(Category = "Ability", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    bool bInstancedAbility;
+
+	/**
      * Describes how this ability is executed. This might determine how the ability is displayed in the UI and it
      * determines how the ability is handled by the order system. Note that this has nothing todo with the effects an
      * ability might apply to a target. This has also nothing todo with the cooldown of the ability.
@@ -191,10 +197,10 @@ protected:
     ERTSOrderGroupExecutionType GroupExecutionType;
 
     /**
-     * The target type of this ability.
+     * The target types of this ability.
      */
-    UPROPERTY(Category = "RTS Targeting", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    ERTSTargetType TargetType;
+    UPROPERTY(Category = "RTS Targeting", EditDefaultsOnly, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = ERTSTargetTypeFlags, AllowPrivateAccess = true))
+    int32 TargetTypeFlags;
 
     /** Details about the preview for this ability while choosing a target. */
     UPROPERTY(Category = "RTS Targeting", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))

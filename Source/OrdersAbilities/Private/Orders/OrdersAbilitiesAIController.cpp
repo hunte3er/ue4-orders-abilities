@@ -1,6 +1,6 @@
-#include "Orders/RTSCharacterAIController.h"
+#include "Orders/OrdersAbilitiesAIController.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -11,17 +11,33 @@
 #include "Orders/RTSOrderHelper.h"
 #include "Orders/RTSOrderWithBehavior.h"
 #include "Orders/RTSStopOrder.h"
+#include "Navigation/CrowdFollowingComponent.h"
 
 
-ARTSCharacterAIController::ARTSCharacterAIController(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+AOrdersAbilitiesAIController::AOrdersAbilitiesAIController(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
 {
     PrimaryActorTick.bCanEverTick = true;
+
+    UCrowdFollowingComponent* CrowdFollowing = Cast<UCrowdFollowingComponent>(GetPathFollowingComponent());
+	if (CrowdFollowing)
+	{
+		CrowdFollowing->SetCrowdSlowdownAtGoal(false, false);
+		CrowdFollowing->SetCrowdAvoidanceQuality(ECrowdAvoidanceQuality::Medium, false);
+		CrowdFollowing->SetCrowdRotateToVelocity(false);
+		//CrowdFollowing->SetCrowdPathOffset(true, false);
+		CrowdFollowing->SetCrowdSeparation(true, false);
+		CrowdFollowing->UpdateCrowdAgentParams();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Crowd following invalid"));
+	}
 }
 
-void ARTSCharacterAIController::Possess(APawn* InPawn)
+void AOrdersAbilitiesAIController::OnPossess(APawn* InPawn)
 {
-    Super::Possess(InPawn);
+    Super::OnPossess(InPawn);
 
     // Load assets.
     StopOrder.LoadSynchronous();
@@ -35,12 +51,13 @@ void ARTSCharacterAIController::Possess(APawn* InPawn)
         SetBlackboardValues(FRTSOrderData(StopOrder.Get()), InPawn->GetActorLocation());
     }
 
-    // Call RunBehaviorTree. This will setup the behavior tree component.
+	// fpwong: we shouldn't need this anymore as we call issue order in the RTSAbilitySystemComponent
+    // // Call RunBehaviorTree. This will setup the behavior tree component.
     UBehaviorTree* BehaviorTree = URTSOrderHelper::GetBehaviorTree(StopOrder.Get());
     RunBehaviorTree(BehaviorTree);
 }
 
-TSubclassOf<AActor> ARTSCharacterAIController::GetBuildingClass() const
+TSubclassOf<AActor> AOrdersAbilitiesAIController::GetBuildingClass() const
 {
     if (!VerifyBlackboard())
     {
@@ -64,7 +81,7 @@ TSubclassOf<AActor> ARTSCharacterAIController::GetBuildingClass() const
     return nullptr;
 }
 
-bool ARTSCharacterAIController::HasOrder(TSubclassOf<URTSOrder> OrderType) const
+bool AOrdersAbilitiesAIController::HasOrder(TSubclassOf<URTSOrder> OrderType) const
 {
     if (!VerifyBlackboard())
     {
@@ -74,7 +91,7 @@ bool ARTSCharacterAIController::HasOrder(TSubclassOf<URTSOrder> OrderType) const
     return Blackboard->GetValueAsClass(URTSBlackboardHelper::BLACKBOARD_KEY_ORDER_TYPE) == OrderType;
 }
 
-void ARTSCharacterAIController::IssueOrder(const FRTSOrderData& Order, FRTSOrderCallback Callback,
+void AOrdersAbilitiesAIController::IssueOrder(const FRTSOrderData& Order, FRTSOrderCallback Callback,
                                            const FVector& HomeLocation)
 {
     UBehaviorTree* BehaviorTree = URTSOrderHelper::GetBehaviorTree(Order.OrderType.Get());
@@ -93,12 +110,12 @@ void ARTSCharacterAIController::IssueOrder(const FRTSOrderData& Order, FRTSOrder
     ApplyOrder(Order, BehaviorTree);
 }
 
-TSoftClassPtr<URTSStopOrder> ARTSCharacterAIController::GetStopOrder() const
+TSoftClassPtr<URTSStopOrder> AOrdersAbilitiesAIController::GetStopOrder() const
 {
     return StopOrder;
 }
 
-void ARTSCharacterAIController::BehaviorTreeEnded(EBTNodeResult::Type Result)
+void AOrdersAbilitiesAIController::BehaviorTreeEnded(EBTNodeResult::Type Result)
 {
     if (!VerifyBlackboard())
     {
@@ -120,7 +137,7 @@ void ARTSCharacterAIController::BehaviorTreeEnded(EBTNodeResult::Type Result)
     }
 }
 
-FVector ARTSCharacterAIController::GetHomeLocation()
+FVector AOrdersAbilitiesAIController::GetHomeLocation()
 {
     if (!VerifyBlackboard())
     {
@@ -130,7 +147,7 @@ FVector ARTSCharacterAIController::GetHomeLocation()
     return Blackboard->GetValueAsVector(URTSBlackboardHelper::BLACKBOARD_KEY_HOME_LOCATION);
 }
 
-void ARTSCharacterAIController::SetBlackboardValues(const FRTSOrderData& Order, const FVector& HomeLocation)
+void AOrdersAbilitiesAIController::SetBlackboardValues(const FRTSOrderData& Order, const FVector& HomeLocation)
 {
     if (!VerifyBlackboard())
     {
@@ -158,7 +175,7 @@ void ARTSCharacterAIController::SetBlackboardValues(const FRTSOrderData& Order, 
     Blackboard->SetValueAsVector(URTSBlackboardHelper::BLACKBOARD_KEY_HOME_LOCATION, HomeLocation);
 }
 
-void ARTSCharacterAIController::ApplyOrder(const FRTSOrderData& Order, UBehaviorTree* BehaviorTree)
+void AOrdersAbilitiesAIController::ApplyOrder(const FRTSOrderData& Order, UBehaviorTree* BehaviorTree)
 {
     UBehaviorTreeComponent* BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
     if (BehaviorTreeComponent != nullptr && BehaviorTree != nullptr)
@@ -174,12 +191,13 @@ void ARTSCharacterAIController::ApplyOrder(const FRTSOrderData& Order, UBehavior
         }
         else
         {
+            // BehaviorTreeComponent->StartTree(*BehaviorTree, EBTExecutionMode::Looped);
             BehaviorTreeComponent->StartTree(*BehaviorTree, EBTExecutionMode::SingleRun);
         }
     }
 }
 
-bool ARTSCharacterAIController::VerifyBlackboard() const
+bool AOrdersAbilitiesAIController::VerifyBlackboard() const
 {
     if (!Blackboard)
     {
@@ -193,7 +211,7 @@ bool ARTSCharacterAIController::VerifyBlackboard() const
     return true;
 }
 
-void ARTSCharacterAIController::Tick(float DeltaTime)
+void AOrdersAbilitiesAIController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
@@ -202,19 +220,28 @@ void ARTSCharacterAIController::Tick(float DeltaTime)
         return;
     }
 
-    switch (BehaviorTreeResult)
-    {
-        case EBTNodeResult::InProgress:
-            break;
-        case EBTNodeResult::Failed:
-            CurrentOrderResultCallback.Broadcast(ERTSOrderResult::FAILED);
-            break;
-        case EBTNodeResult::Aborted:
-            break;
-        case EBTNodeResult::Succeeded:
+    UBehaviorTreeComponent* BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
+	if (BehaviorTreeComponent)
+	{
+        if (!BehaviorTreeComponent->IsRunning())
+        {
             CurrentOrderResultCallback.Broadcast(ERTSOrderResult::SUCCEEDED);
-            break;
-    }
+        }
+	}
 
-    BehaviorTreeResult = EBTNodeResult::InProgress;
+    // switch (BehaviorTreeResult)
+    // {
+    //     case EBTNodeResult::InProgress:
+    //         break;
+    //     case EBTNodeResult::Failed:
+    //         CurrentOrderResultCallback.Broadcast(ERTSOrderResult::FAILED);
+    //         break;
+    //     case EBTNodeResult::Aborted:
+    //         break;
+    //     case EBTNodeResult::Succeeded:
+    //         CurrentOrderResultCallback.Broadcast(ERTSOrderResult::SUCCEEDED);
+    //         break;
+    // }
+    //
+    // BehaviorTreeResult = EBTNodeResult::InProgress;
 }

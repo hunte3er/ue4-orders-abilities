@@ -8,6 +8,7 @@ FRTSOrderTargetData::FRTSOrderTargetData()
     , Location(FVector2D::ZeroVector)
     , TargetTags(FGameplayTagContainer::EmptyContainer)
 {
+    bUseLocation = Actor == nullptr;
 }
 
 FRTSOrderTargetData::FRTSOrderTargetData(AActor* InActor, const FVector2D InLocation,
@@ -16,6 +17,7 @@ FRTSOrderTargetData::FRTSOrderTargetData(AActor* InActor, const FVector2D InLoca
     , Location(InLocation)
     , TargetTags(InTargetTags)
 {
+    bUseLocation = Actor == nullptr;
 }
 
 FString FRTSOrderTargetData::ToString() const

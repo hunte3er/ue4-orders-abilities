@@ -37,6 +37,7 @@ public:
     virtual void BeginPlay() override;
     //~ End UActorComponent Interface
 
+	UFUNCTION(Category = RTS, BlueprintCallable)
     void CheckAutoOrders();
 
 private:
@@ -49,6 +50,7 @@ private:
     bool IssueAutoOrder(const FRTSOrderTypeWithIndex& Order);
     float GetAcquisitionRadius(const FRTSOrderTypeWithIndex& Order);
 
+private:
     /** Contains all orders that may be issued automatically with their associated index. */
     TArray<FRTSOrderTypeWithIndex> Orders;
 

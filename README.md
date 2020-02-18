@@ -1,4 +1,16 @@
-# ue4-orders-abilities
-Sample code of the talk "Hero AI: Gameplay Abilities Meet Behaviour Trees" at Unreal Fest Europe 2019.
+# fpwong branch of ue4-orders-abilities
 
-![Behavior Tree - Use Ability](BT_UseAbility.png)
+Basic implementation of the orders-abilities system. Code is in a mess, use for reference mainly.
+
+Combat system generally works but I need to improve how characters store and use abilities
+
+In other works you can only basic attack
+
+Most assets are not included, so expect to replace some of the AnimMontages and AnimBP if you want to get the project running. 
+
+You can test the Spider / Snake / Wasp units are free from [Quaternius](http://quaternius.com)
+
+Significant changes:
+* TargetType uses flags (aka can define multiple target types like ACTOR or LOCATION for an order)
+* Blackboard helper was changed slightly to have better support in C++ as oppose to Blueprints
+* Included some code from [Nick's RTS project](https://github.com/npruehs/ue4-rts)

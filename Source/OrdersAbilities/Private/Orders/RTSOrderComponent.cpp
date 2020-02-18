@@ -1,8 +1,8 @@
 #include "Orders/RTSOrderComponent.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
-#include "UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -10,17 +10,19 @@
 
 #include "AbilitySystem/RTSAbilitySystemHelper.h"
 #include "AbilitySystem/RTSGlobalTags.h"
-#include "Orders/RTSCharacterAIController.h"
+#include "Orders/OrdersAbilitiesAIController.h"
 #include "Orders/RTSOrder.h"
 #include "Orders/RTSOrderErrorTags.h"
 #include "Orders/RTSOrderHelper.h"
 #include "Orders/RTSStopOrder.h"
+#include "RTSSelectableComponent.h"
+#include "RTSOwnerComponent.h"
 
 
 URTSOrderComponent::URTSOrderComponent(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 
     LastOrderHomeLocation = FVector::ZeroVector;
     bIsHomeLocationSet = false;
@@ -36,28 +38,34 @@ void URTSOrderComponent::BeginPlay()
         return;
     }
 
-    // NOTE(np): In A Year Of Rain, we're showing order previews for selected units.
-    //// Register for selection events.
-    //SelectableComponent = Pawn->FindComponentByClass<URTSSelectableComponent>();
-
-    //if (SelectableComponent != nullptr)
-    //{
-    //    SelectableComponent->OnSelected.AddDynamic(this, &URTSOrderComponent::OnSelected);
-    //    SelectableComponent->OnDeselected.AddDynamic(this, &URTSOrderComponent::OnDeselected);
-    //}
+    SelectableComponent = Pawn->FindComponentByClass<URTSSelectableComponent>();
+    
+    if (SelectableComponent != nullptr)
+    {
+        SelectableComponent->OnSelected.AddDynamic(this, &URTSOrderComponent::OnSelected);
+        SelectableComponent->OnDeselected.AddDynamic(this, &URTSOrderComponent::OnDeselected);
+    }
 
     // Reset current order.
     CurrentOrder = FRTSOrderData();
 
     // Try to set the stop order if possible.
-    ARTSCharacterAIController* Controller = Cast<ARTSCharacterAIController>(Pawn->GetController());
+	
+    AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Pawn->GetController());
     if (Controller == nullptr)
     {
-        return;
+		Pawn->SpawnDefaultController();
+		Controller = Cast<AOrdersAbilitiesAIController>(Pawn->GetController());
     }
+
+	if (Controller == nullptr)
+	{
+		return;
+	}
 
     StopOrder = Controller->GetStopOrder();
 
+	// TODO: The line below causes inconsistencies since Issue order has different behavior if CurrentOrder == NewOrder
     CurrentOrder = StopOrder;
     IssueOrder(StopOrder);
 }
@@ -109,6 +117,18 @@ void URTSOrderComponent::IssueOrder(const FRTSOrderData& Order)
                *Order.ToString());
         return;
     }
+
+	URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
+	if (!IsValid(OwnerComponent))
+	{
+		return;
+	}
+
+	// if (!OwnerComponent->IsSameTeamAsController(UGameplayStatics::GetPlayerController(this, 0)))
+	// {
+	// 	return;
+	// }
+	
 
     // Clear the order cue when another order is issued.
     OrderQueue.Empty();
@@ -275,7 +295,7 @@ void URTSOrderComponent::InsertOrderBeforeCurrentOrder(const FRTSOrderData& Orde
     OrderQueue.Insert(CurrentOrder, 0);
 
     // Save home location of the current order.
-    ARTSCharacterAIController* Controller = Cast<ARTSCharacterAIController>(Cast<APawn>(GetOwner())->GetController());
+    AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Cast<APawn>(GetOwner())->GetController());
     if (Controller != nullptr)
     {
         LastOrderHomeLocation = Controller->GetHomeLocation();
@@ -326,7 +346,7 @@ int32 URTSOrderComponent::GetCurrentOrderTargetIndex() const
 void URTSOrderComponent::ObeyOrder(const FRTSOrderData& Order)
 {
     AActor* Owner = GetOwner();
-    FRTSOrderTargetData TargetData = URTSOrderHelper::CreateOrderTargetData(Owner, Order.Target, Order.Location);
+    FRTSOrderTargetData TargetData = URTSOrderHelper::CreateOrderTargetData(Owner, Order);
 
     // Find the correct home location value for this order.
     FVector HomeLocation;
@@ -335,7 +355,14 @@ void URTSOrderComponent::ObeyOrder(const FRTSOrderData& Order)
         HomeLocation = LastOrderHomeLocation;
         bIsHomeLocationSet = false;
     }
-
+	// else if (Order.OrderType == StopOrder) // fpwong: need this so that units which are stopped won't chase forever
+	// {
+	// 	AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Cast<APawn>(GetOwner())->GetController());
+	// 	if (Controller != nullptr)
+	// 	{
+	// 		HomeLocation = Controller->GetHomeLocation();
+	// 	}
+	// }
     else
     {
         HomeLocation = Owner->GetActorLocation();
@@ -416,13 +443,13 @@ bool URTSOrderComponent::CheckOrder(const FRTSOrderData& Order) const
         return false;
     }
 
-    FRTSOrderTargetData TargetData = URTSOrderHelper::CreateOrderTargetData(OrderedActor, Order.Target, Order.Location);
+    FRTSOrderTargetData TargetData = URTSOrderHelper::CreateOrderTargetData(OrderedActor, Order);
     if (!URTSOrderHelper::IsValidTarget(OrderType.Get(), OrderedActor, TargetData, Order.Index, &OrderErrorTags))
     {
         LogOrderErrorMessage(
             FString::Printf(
                 TEXT("URTSOrderComponent::CheckOrder: The actor '%s' was issued to obey the order '%s', but the "
-                     "target data is invalid: %s"),
+                    "target data is invalid: %s"),
                 *OrderedActor->GetName(), *OrderType->GetName(), *TargetData.ToString()),
             OrderErrorTags);
         return false;
@@ -459,7 +486,7 @@ void URTSOrderComponent::OrderEnded(ERTSOrderResult OrderResult)
         case ERTSOrderResult::CANCELED:
             if (!URTSOrderHelper::CanOrderBeConsideredAsSucceeded(
                     CurrentOrder.OrderType, Owner,
-                    URTSOrderHelper::CreateOrderTargetData(Owner, CurrentOrder.Target, CurrentOrder.Location),
+                    URTSOrderHelper::CreateOrderTargetData(Owner, CurrentOrder),
                     CurrentOrder.Index))
             {
                 // OrderCanceled will be raised in IssueOrder.
@@ -496,7 +523,7 @@ void URTSOrderComponent::OrderCanceled()
 {
     AActor* Owner = GetOwner();
     FRTSOrderTargetData TargetData =
-        URTSOrderHelper::CreateOrderTargetData(Owner, CurrentOrder.Target, CurrentOrder.Location);
+        URTSOrderHelper::CreateOrderTargetData(Owner, CurrentOrder);
 
     UClass* OrderType = nullptr;
 
@@ -566,9 +593,7 @@ void URTSOrderComponent::RegisterTagListeners(const FRTSOrderData& Order)
 
     // Target tags
     //
-
-    ERTSTargetType TargetType = URTSOrderHelper::GetTargetType(Order.OrderType, Owner, Order.Index);
-    if (TargetType == ERTSTargetType::ACTOR)
+    if (URTSOrderHelper::IsTargetTypeFlagChecked(Order.OrderType, ERTSTargetTypeFlags::ACTOR, Owner, Order.Index))
     {
         UAbilitySystemComponent* TargetAbilitySystem =
             UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Order.Target);
@@ -639,9 +664,7 @@ void URTSOrderComponent::UnregisterTagListeners(const FRTSOrderData& Order)
 
     // Target tags
     //
-
-    ERTSTargetType TargetType = URTSOrderHelper::GetTargetType(Order.OrderType, Owner, Order.Index);
-    if (TargetType == ERTSTargetType::ACTOR)
+    if (URTSOrderHelper::IsTargetTypeFlagChecked(Order.OrderType, ERTSTargetTypeFlags::ACTOR, Owner, Order.Index))
     {
         UAbilitySystemComponent* TargetAbilitySystem =
             UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Order.Target);
@@ -723,7 +746,9 @@ void URTSOrderComponent::ObeyStopOrder()
 
 AActor* URTSOrderComponent::CreateOrderPreviewActor(const FRTSOrderData& Order)
 {
-    if (OrderPreviewActorClass == nullptr)
+	TSubclassOf<ARTSOrderPreview> OrderPreviewData = URTSOrderHelper::GetOrderPreviewData(Order.OrderType, GetOwner(), Order.Index).GetOrderPreviewClass();
+	
+    if (OrderPreviewData == nullptr)
     {
         return nullptr;
     }
@@ -736,35 +761,24 @@ AActor* URTSOrderComponent::CreateOrderPreviewActor(const FRTSOrderData& Order)
     AActor* SpawnedActor = nullptr;
 
     // Spawn default order preview.
-    ERTSTargetType TargetType = URTSOrderHelper::GetTargetType(Order.OrderType);
-    switch (TargetType)
-    {
-        case ERTSTargetType::NONE:
-            break;
-        case ERTSTargetType::ACTOR:
-            if (Order.Target != nullptr)
-            {
-                Location = Order.Target->GetActorLocation();
-                SpawnedActor =
-                    GetWorld()->SpawnActor<AActor>(OrderPreviewActorClass, Location, FRotator::ZeroRotator, SpawnInfo);
+    // @TODO: Spawn order preview data for other TargetTypes::NONE
+	
+	URTSOrder* DefaultOrder = URTSOrderHelper::GetDefaultOrder(Order.OrderType);
+	if (DefaultOrder->IsTargetTypeFlagChecked(nullptr, -1, ERTSTargetTypeFlags::ACTOR) && Order.Target != nullptr)
+	{
+        Location = Order.Target->GetActorLocation();
+        SpawnedActor = GetWorld()->SpawnActor<AActor>(OrderPreviewData, Location, FRotator::ZeroRotator, SpawnInfo);
 
-                SpawnedActor->AttachToActor(Order.Target, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-                OrderPreviewActors.Add(SpawnedActor);
-            }
-            break;
-        case ERTSTargetType::LOCATION:
-        case ERTSTargetType::DIRECTION:
-            // NOTE(np): In A Year Of Rain, we're using a raycast to translate between 3D and 2D space.
-            //Location = URTSUtilities::GetGroundLocation2D(this, Order.Location);
-            Location = FVector(Order.Location.X, Order.Location.Y, 0.0f);
-            SpawnedActor =
-                GetWorld()->SpawnActor<AActor>(OrderPreviewActorClass, Location, FRotator::ZeroRotator, SpawnInfo);
-            OrderPreviewActors.Add(SpawnedActor);
-            break;
-        case ERTSTargetType::PASSIVE:
-            break;
-        default:
-            break;
+        SpawnedActor->AttachToActor(Order.Target, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        OrderPreviewActors.Add(SpawnedActor);
+	}
+    else if (DefaultOrder->IsTargetTypeFlagChecked(nullptr, -1, ERTSTargetTypeFlags::LOCATION | ERTSTargetTypeFlags::DIRECTION))
+    {
+        // NOTE(np): In A Year Of Rain, we're using a raycast to translate between 3D and 2D space.
+		//Location = URTSUtilities::GetGroundLocation2D(this, Order.Location);
+        Location = FVector(Order.Location.X, Order.Location.Y, 0.0f);
+        SpawnedActor = GetWorld()->SpawnActor<AActor>(OrderPreviewData, Location, FRotator::ZeroRotator, SpawnInfo);
+        OrderPreviewActors.Add(SpawnedActor);
     }
 
     return SpawnedActor;
@@ -816,33 +830,32 @@ void URTSOrderComponent::UpdateOrderPreviews()
         return;
     }
 
-    // NOTE(np): In A Year Of Rain, we're only showing order previews for friendly players.
-    /*URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
+	URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
+	
+	if (!IsValid(OwnerComponent))
+	{
+		return;
+	}
+	
+	if (!OwnerComponent->IsSameTeamAsController(UGameplayStatics::GetPlayerController(this, 0)))
+	{
+		return;
+	}
 
-    if (!IsValid(OwnerComponent))
-    {
-        return;
-    }
+	// Spawn new previews.
+	bool bSelected = true;// SelectableComponent != nullptr && SelectableComponent->IsSelected();
 
-    if (!OwnerComponent->IsSameTeamAsController(UGameplayStatics::GetPlayerController(this, 0)))
-    {
-        return;
-    }
+	// if ((bSelected && OrderQueue.Num() > 0) || CurrentOrder.OrderType == BeginConstructionOrder)
+	if (bSelected || CurrentOrder.OrderType == BeginConstructionOrder) // show the preview for the current order too?
+	{
+		CreateOrderPreviewActor(CurrentOrder);
+	}
 
-    // Spawn new previews.
-    bool bSelected = SelectableComponent != nullptr && SelectableComponent->IsSelected();
-
-    if ((bSelected && OrderQueue.Num() > 0) || CurrentOrder.OrderType == BeginConstructionOrder)
-    {
-        CreateOrderPreviewActor(CurrentOrder);
-    }
-
-    for (const FRTSOrderData& OrderData : OrderQueue)
-    {
-        if (bSelected || OrderData.OrderType == BeginConstructionOrder)
-        {
-            CreateOrderPreviewActor(OrderData);
-        }
-    }
-    */
+	for (const FRTSOrderData& OrderData : OrderQueue)
+	{
+		if (bSelected || OrderData.OrderType == BeginConstructionOrder)
+		{
+			CreateOrderPreviewActor(OrderData);
+		}
+	}
 }

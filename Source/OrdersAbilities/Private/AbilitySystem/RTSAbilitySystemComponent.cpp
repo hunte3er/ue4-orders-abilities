@@ -1,8 +1,8 @@
 #include "AbilitySystem/RTSAbilitySystemComponent.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
-#include "UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemGlobals.h"
@@ -17,6 +17,9 @@
 #include "AbilitySystem/RTSGameplayAbility.h"
 #include "AbilitySystem/RTSGlobalTags.h"
 #include "AbilitySystem/RTSInitialStatusTagsProvider.h"
+#include "RTSOwnerComponent.h"
+#include "RTSUtilities.h"
+#include "RTSPlayerState.h"
 
 URTSAbilitySystemComponent::URTSAbilitySystemComponent()
 {
@@ -32,18 +35,21 @@ void URTSAbilitySystemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
     DOREPLIFETIME(URTSAbilitySystemComponent, CollectedXP);
     DOREPLIFETIME(URTSAbilitySystemComponent, AbilityPoints);
     DOREPLIFETIME(URTSAbilitySystemComponent, ItemAbilities);
-
+	
     // Our pawns are owned by PlayerControllers, but possessed by AIControllers.
     // As APawn::GetNetConnection() is forwarded to their respective controller,
     // we need to change the replication condition for ActivatableAbilities in order
     // to properly replicate to clients.
-    DOREPLIFETIME_CHANGE_CONDITION(URTSAbilitySystemComponent, ActivatableAbilities, COND_None);
+
+	RESET_REPLIFETIME_CONDITION(URTSAbilitySystemComponent, ActivatableAbilities, COND_None);
 }
 
 FName URTSAbilitySystemComponent::GetName() const
 {
-    static FName Name = URTSAbilitySystemHelper::GetLastTagName(NameTag);
-    return Name;
+	// NOTE(fpwong): Why is this a static var? causes errors in BP since other ASC will need to use the name but this var is static
+    // static FName Name = URTSAbilitySystemHelper::GetLastTagName(NameTag);
+    // return Name;
+    return URTSAbilitySystemHelper::GetLastTagName(NameTag);
 }
 
 FGameplayTag URTSAbilitySystemComponent::GetNameTag() const
@@ -423,14 +429,13 @@ void URTSAbilitySystemComponent::BeginPlay()
     //    GameMode->OnActorKilled.AddDynamic(this, &URTSAbilitySystemComponent::OnAnyActorKilled);
     //}
 
-    // NOTE(np): In A Year Of Rain, units can change their owner at runtime (e.g. rescued units in story campaign).
-    //// Make sure to adjust the tags when the owner of this component changes.
-    //URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
-    //if (OwnerComponent != nullptr)
-    //{
-    //    RegisterTransferPlayerTags(Cast<APlayerState>(OwnerComponent->GetPlayerOwner()));
-    //    OwnerComponent->OnOwnerChanged.AddDynamic(this, &URTSAbilitySystemComponent::OnOwnerChanged);
-    //}
+    // Make sure to adjust the tags when the owner of this component changes.
+    URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
+    if (OwnerComponent != nullptr)
+    {
+        RegisterTransferPlayerTags(Cast<APlayerState>(OwnerComponent->GetPlayerOwner()));
+        OwnerComponent->OnOwnerChanged.AddDynamic(this, &URTSAbilitySystemComponent::OnOwnerChanged);
+    }
 }
 
 void URTSAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
@@ -469,43 +474,83 @@ void URTSAbilitySystemComponent::OnRemoveAbility(FGameplayAbilitySpec& AbilitySp
 
 void URTSAbilitySystemComponent::InitializeAttributes(int AttributeLevel, bool bInitialInit)
 {
-    if (!NameTag.IsValid())
-    {
-        return;
-    }
-
     if (DefaultStartingData.Num() == 0)
     {
         return;
     }
 
-    FName GroupName = URTSAbilitySystemHelper::GetLastTagName(NameTag);
-
-    // Note that this might cause a crash when no valid paths to data tables where specified in the 'Game.ini' file.
-    FAttributeSetInitter* AttributeInitter = UAbilitySystemGlobals::Get().GetAttributeSetInitter();
-
-    // This is a work around for a bug that happens at least in the editor. It might be that the 'SpawnedAttributes'
-    // contains nullptr entries for some for some unknown reason. This has properly something to do with serialization.
-    // 'AttributeInitter->InitAttributeSetDefaults' will crash when the array contains a nullptr.
-    for (int32 i = SpawnedAttributes.Num() - 1; i >= 0; --i)
-    {
-        if (SpawnedAttributes[i] == nullptr)
-        {
-            SpawnedAttributes.RemoveAt(i);
-        }
-    }
-
-    UE_LOG(LogRTS, Verbose, TEXT("Initializing attributes of %s with group name %s..."), *GetOwner()->GetName(),
-           *GroupName.ToString());
-
-    AttributeInitter->InitAttributeSetDefaults(this, GroupName, AttributeLevel, bInitialInit);
+	for (FAttributeDefaults Data : DefaultStartingData)
+	{
+		// Data.Attributes;
+		if (IsValid(Data.Attributes))
+		{
+			InitStats(Data.Attributes, nullptr);
+		}
+	}
 
     for (UAttributeSet* AttributeSet : SpawnedAttributes)
     {
         URTSAttributeSet* RTSAttributeSet = Cast<URTSAttributeSet>(AttributeSet);
         if (RTSAttributeSet != nullptr)
         {
+            RTSAttributeSet->Init();
+        }
+    }
+	
+	if (!NameTag.IsValid())
+	{
+		return;
+	}
+
+    FName GroupName = URTSAbilitySystemHelper::GetLastTagName(NameTag);
+	
+	// if (InitialAttributesTable != nullptr)
+	// {
+	// 	TArray<FGameplayAttribute> AllAttributes;
+	// 	GetAllAttributes(AllAttributes);
+	// 	for (const FGameplayAttribute& Attribute : AllAttributes)
+	// 	{
+	// 		FString AttributeName = Attribute.GetName();
+	// 		FString AttributeSetName = Attribute.GetAttributeSetClass()->GetName();
+	// 		FName RowName = FName(*FString::Printf(TEXT("%s.%s.%s"), *UnitName, *AttributeSetName, *AttributeName));
+	//
+	// 		if (FRealCurve* Curve = InitialAttributesTable->FindCurve(RowName, "", false))
+	// 		{
+	// 			float AttributeValue = Curve->Eval(0);
+	// 			UE_LOG(LogTemp, Warning, TEXT("Set attribute for %s to %f"), *RowName.ToString(), AttributeValue);
+	// 			SetNumericAttributeBase(Attribute, AttributeValue);
+	// 		}
+	// 	}
+	// }
+
+    FAttributeSetInitter* AttributeInitter = UAbilitySystemGlobals::Get().GetAttributeSetInitter();
+
+
+	
+	// This is a work around for a bug that happens at least in the editor. It might be that the 'SpawnedAttributes'
+	// contains nullptr entries for some for some unknown reason. This has properly something to do with serialization.
+	// 'AttributeInitter->InitAttributeSetDefaults' will crash when the array contains a nullptr.
+	for (int32 i = SpawnedAttributes.Num() - 1; i >= 0; --i)
+	{
+		if (SpawnedAttributes[i] == nullptr)
+		{
+			SpawnedAttributes.RemoveAt(i);
+		}
+	}
+
+	UE_LOG(LogRTS, Verbose, TEXT("Initializing attributes of %s with group name %s..."), *GetOwner()->GetName(), *GroupName.ToString());
+	
+	// Note that this might cause a crash when no valid paths to data tables where specified in the 'Game.ini' file.
+	//
+	AttributeInitter->InitAttributeSetDefaults(this, GroupName, AttributeLevel, bInitialInit);
+ 
+    for (UAttributeSet* AttributeSet : SpawnedAttributes)
+    {
+        URTSAttributeSet* RTSAttributeSet = Cast<URTSAttributeSet>(AttributeSet);
+        if (RTSAttributeSet != nullptr)
+        {
             RTSAttributeSet->PostInitializeProperties(bInitialInit);
+            RTSAttributeSet->GrantAbilities();
         }
     }
 }
@@ -555,27 +600,27 @@ void URTSAbilitySystemComponent::OnAnyActorKilled(AActor* KilledActor, AControll
     }
 
     // NOTE(np): In A Year Of Rain, the owner component specified the current owner of a unit (for replication).
-    //URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
+    URTSOwnerComponent* OwnerComponent = Owner->FindComponentByClass<URTSOwnerComponent>();
 
-    //if (!IsValid(OwnerComponent))
-    //{
-    //    return;
-    //}
+    if (!IsValid(OwnerComponent))
+    {
+        return;
+    }
 
-    //// Check if belonging to same team.
-    //// Note that the OwnerComponent owner if KilledActor is no longer valid at this point, so we need to use
-    //// PreviousOwner here.
-    //if (IsValid(PreviousOwner) && IsValid(OwnerComponent->GetPlayerOwner()) &&
-    //    OwnerComponent->GetPlayerOwner()->IsSameTeamAs(Cast<ARTSPlayerState>(PreviousOwner->PlayerState)))
-    //{
-    //    return;
-    //}
+    // Check if belonging to same team.
+    // Note that the OwnerComponent owner if KilledActor is no longer valid at this point, so we need to use
+    // PreviousOwner here.
+    if (IsValid(PreviousOwner) && IsValid(OwnerComponent->GetPlayerOwner()) &&
+        OwnerComponent->GetPlayerOwner()->IsSameTeamAs(Cast<ARTSPlayerState>(PreviousOwner->PlayerState)))
+    {
+        return;
+    }
 
-    //// Check if killer belongs to our team.
-    //if (!URTSUtilities::AreInSameTeam(GetOwner(), DamageCauser))
-    //{
-    //    return;
-    //}
+    // Check if killer belongs to our team.
+    if (!URTSUtilities::AreInSameTeam(GetOwner(), DamageCauser))
+    {
+        return;
+    }
 
     URTSAbilitySystemComponent* KilledActorAbilitySystem =
         Cast<URTSAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(KilledActor));
@@ -802,7 +847,7 @@ void URTSAbilitySystemComponent::GetAutoOrders_Implementation(TArray<FRTSOrderTy
             continue;
         }
 
-        if (Ability->GetTargetType() != ERTSTargetType::PASSIVE && !BasicAttackAbilities.Contains(AbilityType))
+        if (!Ability->IsTargetTypeFlagChecked(ERTSTargetTypeFlags::PASSIVE) && !BasicAttackAbilities.Contains(AbilityType))
         {
             OutAutoOrders.Add(FRTSOrderTypeWithIndex(UseAbilityOrder, Index));
         }

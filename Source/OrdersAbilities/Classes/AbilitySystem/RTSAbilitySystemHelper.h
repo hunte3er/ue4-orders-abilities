@@ -3,17 +3,19 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AttributeSet.h"
-#include "GameplayAbility.h"
-#include "GameplayAbilityTypes.h"
-#include "GameplayAbilityTargetTypes.h"
+#include "Abilities/GameplayAbility.h"
+#include "Abilities/GameplayAbilityTypes.h"
+#include "Abilities/GameplayAbilityTargetTypes.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectTypes.h"
-#include "Text.h"
+#include "Internationalization/Text.h"
 #include "Orders/RTSOrderTargetData.h"
 #include "Orders/RTSTargetType.h"
+#include "RTSGameplayAbility.h"
 #include "RTSAbilitySystemHelper.generated.h"
 
 
+class ARTSPlayerState;
 /** Helper function for the ability system. */
 UCLASS(BlueprintType)
 class ORDERSABILITIES_API URTSAbilitySystemHelper : public UBlueprintFunctionLibrary
@@ -52,6 +54,10 @@ public:
     /** Gets all melee or ranged attack ability of the given ability system component. */
     UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
     static TArray<TSubclassOf<UGameplayAbility>> GetBasicAttackAbilities(const UAbilitySystemComponent* AbilitySystem);
+
+	/** Gets all unit abilities of the given ability system component. */
+	UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
+	static TArray<TSubclassOf<UGameplayAbility>> GetOrderAbilities(const UAbilitySystemComponent* AbilitySystem);
 
     /** Returns the list of all abilities of the given ability system component. */
     UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
@@ -104,10 +110,6 @@ public:
     /** Gets the name of the ability. Can be shown in the UI. */
     UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
     static FText GetAbilityDescription(TSubclassOf<UGameplayAbility> Ability, AActor* Actor);
-
-    /** Gets the target type of the specified gameplay ability class. */
-    UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
-    static ERTSTargetType GetAbilityTargetType(TSubclassOf<UGameplayAbility> Ability);
 
     /** Whether to show abilities of the specified class as default orders in the UI, instead of as abilities. */
     UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
@@ -269,15 +271,15 @@ public:
     UFUNCTION(Category = "RTS Ability|Tags", BlueprintPure)
     static FGameplayTagContainer GetRelationshipTags(const AActor* Actor, const AActor* Other);
 
-    // NOTE(np): In A Year Of Rain, we're adding relationship tags based on the team assignments of both players.
-    ///**
-    // * Gets the tags describing the relationship of the first player to the other (friendly, hostile, neutral, same
-    // * player, visibility).
-    // */
-    //UFUNCTION(Category = "RTS Ability|Tags", BlueprintPure)
-    //static void GetRelationshipTagsFromPlayers(const ARTSPlayerState* ActorPlayerState,
-    //                                           const ARTSPlayerState* OtherPlayerState,
-    //                                           FGameplayTagContainer& OutRelationshipTags);
+    /**
+     * Gets the tags describing the relationship of the first player to the other (friendly, hostile, neutral, same
+     * player, visibility).
+     */
+    UFUNCTION(Category = "RTS Ability|Tags", BlueprintPure)
+    static void GetRelationshipTagsFromPlayers(const ARTSPlayerState* ActorPlayerState,
+                                               const ARTSPlayerState* OtherPlayerState,
+                                               FGameplayTagContainer& OutRelationshipTags);
+	
     /**
      * Gets the gameplay tags of the specified actors, including relationship tags.
      */
@@ -338,6 +340,13 @@ public:
     UFUNCTION(Category = "RTS Ability|Event", BlueprintCallable)
     static int32 SendGameplayEvent(AActor* Actor, FGameplayEventData Payload);
 
+	/**
+	* Sends a gameplay event to the specified actor. Returns the number of successful ability activations triggered by
+	* the event.
+	*/
+	UFUNCTION(Category = "RTS Ability|Event", BlueprintCallable)
+	static int32 SendGameplayEventWithTargetActor(AActor* Actor, FGameplayTag EventTag, AActor* TargetActor);
+
     // ---------------------------------------------------------------------------------------------------
     // Curve Tables
     // ---------------------------------------------------------------------------------------------------
@@ -381,9 +390,7 @@ public:
                                     int32& OutIndex);
 
     /** Creates an ability target data from the specified order target data. */
-    static FGameplayAbilityTargetDataHandle
-    CreateAbilityTargetDataFromOrderTargetData(AActor* OrderedActor, const FRTSOrderTargetData& OrderTargetData,
-                                               ERTSTargetType TargetType);
+    static FGameplayAbilityTargetDataHandle CreateAbilityTargetDataFromOrderTargetData(AActor* OrderedActor, const FRTSOrderTargetData& OrderTargetData, int32 TargetTypeFlags);
 
     // ---------------------------------------------------------------------------------------------------
     // GameplayCue

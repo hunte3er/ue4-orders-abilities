@@ -22,87 +22,48 @@ void URTSAttackAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
     // to confusing and annoying replication errors, usually involving clientside ability prediction.
     // https://wiki.unrealengine.com/GameplayAbilities_and_You#AttributeSet
     // This is how it is done properly for attributes.
-    DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, Damage, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, AttackDamageLow, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, AttackDamageHigh, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, Cooldown, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, Range, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, OutgoingDamageMultiplier, COND_None, REPNOTIFY_Always);
 }
 
-void URTSAttackAttributeSet::OnRep_Damage()
+URTSAttackAttributeSet::URTSAttackAttributeSet()
 {
-    GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Damage);
-}
-
-const FGameplayAttribute& URTSAttackAttributeSet::DamageAttribute()
-{
-    static FGameplayAttribute Attribute(FindFieldChecked<UProperty>(
-        URTSAttackAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(URTSAttackAttributeSet, Damage)));
-    return Attribute;
-}
-
-void URTSAttackAttributeSet::OnRep_Cooldown()
-{
-    GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Cooldown);
-}
-
-const FGameplayAttribute& URTSAttackAttributeSet::CooldownAttribute()
-{
-    static FGameplayAttribute Attribute(FindFieldChecked<UProperty>(
-        URTSAttackAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(URTSAttackAttributeSet, Cooldown)));
-    return Attribute;
-}
-
-void URTSAttackAttributeSet::OnRep_Range()
-{
-    GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Range);
-}
-
-const FGameplayAttribute& URTSAttackAttributeSet::RangeAttribute()
-{
-    static FGameplayAttribute Attribute(FindFieldChecked<UProperty>(
-        URTSAttackAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(URTSAttackAttributeSet, Range)));
-    return Attribute;
-}
-
-void URTSAttackAttributeSet::OnRep_OutgoingDamageMultiplier()
-{
-    GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, OutgoingDamageMultiplier);
-}
-
-const FGameplayAttribute& URTSAttackAttributeSet::OutgoingDamageMultiplierAttribute()
-{
-    static FGameplayAttribute Attribute(
-        FindFieldChecked<UProperty>(URTSAttackAttributeSet::StaticClass(),
-                                    GET_MEMBER_NAME_CHECKED(URTSAttackAttributeSet, OutgoingDamageMultiplier)));
-    return Attribute;
+    AttackDamageLow = 1.0f;
+    AttackDamageHigh = 2.0f;
+	Cooldown = 2.0f;
+	Range = 125.0f;
+	OutgoingDamageMultiplier = 1.0f;
 }
 
 bool URTSAttackAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const
 {
     // We do not want the health property to change when the attribute sets properties where initialized using a curve
     // table.
-    return (PropertyToInit != OutgoingDamageMultiplierAttribute().GetUProperty());
+    return (PropertyToInit != GetOutgoingDamageMultiplierAttribute().GetUProperty());
 }
 
 void URTSAttackAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
-    if (Attribute == DamageAttribute())
+    if (Attribute == GetAttackDamageLowAttribute())
     {
         // Note that we can use game play effects to heal units so we can clamp this value with min == 0.
         NewValue = FMath::Clamp(NewValue, 0.0f, MAX_DAMAGE);
     }
 
-    if (Attribute == CooldownAttribute())
+    if (Attribute == GetCooldownAttribute())
     {
         NewValue = FMath::Clamp(NewValue, 0.0f, MAX_COOLDOWN);
     }
 
-    if (Attribute == RangeAttribute())
+    if (Attribute == GetRangeAttribute())
     {
         NewValue = FMath::Clamp(NewValue, 0.0f, MAX_RANGE);
     }
 
-    if (Attribute == OutgoingDamageMultiplierAttribute())
+    if (Attribute == GetOutgoingDamageMultiplierAttribute())
     {
         NewValue = FMath::Clamp(NewValue, 0.0f, MAX_OUTGOING_DAMAGE_MULTIPLIER);
     }

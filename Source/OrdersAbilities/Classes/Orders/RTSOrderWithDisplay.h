@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Orders/RTSOrder.h"
-#include "Text.h"
+#include "Internationalization/Text.h"
 #include "RTSOrderWithDisplay.generated.h"
 
 class AActor;

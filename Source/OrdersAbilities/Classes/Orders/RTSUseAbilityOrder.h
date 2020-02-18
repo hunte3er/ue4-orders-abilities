@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Text.h"
+#include "Internationalization/Text.h"
 #include "Orders/RTSOrderWithBehavior.h"
 #include "Orders/RTSTargetType.h"
 #include "RTSUseAbilityOrder.generated.h"
@@ -25,7 +25,7 @@ public:
     //~ Begin URTSOrder Interface
     virtual bool CanObeyOrder(const AActor* OrderedActor, int32 Index,
                               FRTSOrderErrorTags* OutErrorTags = nullptr) const override;
-    virtual ERTSTargetType GetTargetType(const AActor* OrderedActor, int32 Index) const override;
+    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const override;
     virtual void IssueOrder(AActor* OrderedActor, const FRTSOrderTargetData& TargetData, int32 Index,
                             FRTSOrderCallback Callback, const FVector& HomeLocation) const override;
     virtual UTexture2D* GetNormalIcon(const AActor* OrderedActor, int32 Index) const override;

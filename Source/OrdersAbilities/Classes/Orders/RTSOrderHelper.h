@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GameplayTagContainer.h"
-#include "Text.h"
-#include "Vector2D.h"
+#include "Internationalization/Text.h"
+#include "Math/Vector2D.h"
 #include "Orders/RTSOrder.h"
 #include "Orders/RTSOrderData.h"
 #include "Orders/RTSOrderErrorTags.h"
@@ -17,6 +17,7 @@
 class AActor;
 class UTexture2D;
 class URTSOrderWithBehavior;
+class UBehaviorTree;
 
 /**
  * Helper functions for accessing the default objects of order classes.
@@ -29,6 +30,10 @@ class ORDERSABILITIES_API URTSOrderHelper : public UBlueprintFunctionLibrary
 public:
     /** Whether the specified actor can obey this kind of order. */
     UFUNCTION(Category = "RTS Order", BlueprintPure)
+    static URTSOrder* GetDefaultOrder(TSoftClassPtr<URTSOrder> OrderType);
+	
+    /** Whether the specified actor can obey this kind of order. */
+    UFUNCTION(Category = "RTS Order", BlueprintPure)
     static bool CanObeyOrder(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor, int32 Index = -1);
 
     /** Whether the specified actor can obey this kind of order. */
@@ -39,6 +44,9 @@ public:
     /** Whether the specified actor can obey this kind of order. */
     static bool CanObeyOrder(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor, int32 Index,
                              FRTSOrderErrorTags* OutErrorTags);
+
+    /** Whether the specified actor can obey this kind of order. */
+    static bool CanObeyOrder(const AActor* OrderedActor, const FRTSOrderData& OrderData, FRTSOrderErrorTags* OutErrorTags);
 
     /** Whether the specified actor and/or location is a valid target for this order. */
     UFUNCTION(Category = "RTS Order", BlueprintPure)
@@ -80,7 +88,7 @@ public:
 
     /** Gets the target type the specified order is using. */
     UFUNCTION(Category = "RTS Order", BlueprintPure)
-    static ERTSTargetType GetTargetType(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor = nullptr,
+    static bool IsTargetTypeFlagChecked(TSoftClassPtr<URTSOrder> OrderType, ERTSTargetTypeFlags InFlag, const AActor* OrderedActor = nullptr,
                                         int32 Index = -1);
 
     /** Whether this order type creates individual target locations for a group of actors */
@@ -99,7 +107,10 @@ public:
     /** Creates order target data using the specified target actor. */
     UFUNCTION(Category = "RTS Order", BlueprintPure)
     static FRTSOrderTargetData CreateOrderTargetData(const AActor* OrderedActor, AActor* TargetActor,
-                                                     const FVector2D& TargetLocation = FVector2D::ZeroVector);
+                                                     const FVector2D& TargetLocation = FVector2D::ZeroVector, bool bUseLocation = false);
+
+    /** Creates order target data using the specified target actor. */
+	static FRTSOrderTargetData CreateOrderTargetData(const AActor* OrderedActor, const FRTSOrderData& OrderData);
 
     /** Gets the normal icon of the order. Can be shown in the UI. */
     UFUNCTION(Category = "RTS Order", BlueprintPure)
@@ -313,4 +324,9 @@ public:
      */
     static AActor* FindBestScoredTargetForOrder(TSoftClassPtr<URTSOrder> OrderType, const AActor* OrderedActor,
                                                 const TArray<AActor*> Targets, int32 Index, float& OutScore);
+
+
+	FVector2D GetActorCenterOnScreen(AActor* Actor) const;
+
+	FVector2D GetActorSizeOnScreen(AActor* Actor) const;
 };

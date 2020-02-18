@@ -23,6 +23,8 @@ public:
     virtual void CreateIndividualTargetLocations(const TArray<AActor*>& OrderedActors,
                                                  const FRTSOrderTargetData& TargetData,
                                                  TArray<FVector2D>& OutTargetLocations) const override;
+
+    virtual bool CanObeyOrder(const AActor* OrderedActor, const FRTSOrderData& OrderData, FRTSOrderErrorTags* OutErrorTags) const override;
     //~ End URTSOrder Interface
 
 private:

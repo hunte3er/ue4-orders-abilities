@@ -23,6 +23,9 @@ public:
     /** Whether the actor is generally able to attack. This tag should never be removed. */
     static const FGameplayTag& Status_Permanent_CanAttack();
 
+	/** Whether the actor is generally able to be attacked. This tag should never be removed. */
+	static const FGameplayTag& Status_Permanent_CanBeAttacked();
+
     /** Whether the actor is generally able to repair. This tag should never be removed. */
     static const FGameplayTag& Status_Permanent_CanRepair();
 
@@ -55,6 +58,9 @@ public:
 
     /** Whether the actor has an inventory. This tag should never be removed. */
     static const FGameplayTag& Status_Permanent_HasInventory();
+
+    /** Whether the actor has stats. This tag should never be removed. */
+    static const FGameplayTag& Status_Permanent_HasStats();
 
     /** Whether the actor is an item. This tag should never be removed. */
     static const FGameplayTag& Status_Permanent_IsItem();
@@ -208,6 +214,16 @@ public:
      * for every attack-command). Also it is an indicator for the commandgrid and will hide those abilities */
     static const FGameplayTag& Event_Attack();
 
+	/** Whether tag the GameplayAbility as an Ability, if it used as a trigger-event-tag (This event will be called
+	* for ability) */
+	static const FGameplayTag& Event_OrderAbility();
+
+	/** On death event */
+	static const FGameplayTag& Event_OnKilled();
+
+    /** On Level up event */
+    static const FGameplayTag& Event_OnLevelUp();
+	
     // ---------------------------------------------------------------------------------------------------
     // Ability tags
     // ---------------------------------------------------------------------------------------------------

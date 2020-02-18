@@ -15,7 +15,7 @@ class ORDERSABILITIES_API URTSStopOrder : public URTSCharacterAIOrder
     GENERATED_BODY()
 public:
     URTSStopOrder();
-
+	
     //~ Begin URTSOrder Interface
     virtual bool AreAutoOrdersAllowedDuringOrder() const;
     //~ End URTSOrder Interface

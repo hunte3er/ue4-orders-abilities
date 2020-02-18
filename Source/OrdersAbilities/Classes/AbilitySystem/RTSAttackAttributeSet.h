@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/RTSAttributeSet.h"
+#include "AbilitySystemComponent.h"
 #include "RTSAttackAttributeSet.generated.h"
 
 /**
@@ -23,36 +24,50 @@ public:
     static const float MAX_RANGE;
     static const float MAX_OUTGOING_DAMAGE_MULTIPLIER;
 
-    /** Default attack damage. */
-    UPROPERTY(Category = "Attributes|Attack", BlueprintReadOnly, ReplicatedUsing = OnRep_Damage)
-    float Damage;
+	URTSAttackAttributeSet();
+
+    /** AttackDamageLow Attribute */
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_AttackDamageLow)
+	FGameplayAttributeData AttackDamageLow;
+	ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, AttackDamageLow)
+
+	UFUNCTION()
+	void OnRep_AttackDamageLow() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, AttackDamageLow); }
+
+    /** AttackDamageHigh Attribute */
+    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_AttackDamageHigh)
+    FGameplayAttributeData AttackDamageHigh;
+    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, AttackDamageHigh)
+
     UFUNCTION()
-    void OnRep_Damage();
-    static const FGameplayAttribute& DamageAttribute();
+    void OnRep_AttackDamageHigh() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, AttackDamageHigh); }
 
     /** Time before the attack can be used again, in seconds. */
-    UPROPERTY(Category = "Attributes|Attack", BlueprintReadOnly, ReplicatedUsing = OnRep_Cooldown)
-    float Cooldown;
-    UFUNCTION()
-    void OnRep_Cooldown();
-    static const FGameplayAttribute& CooldownAttribute();
+    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_Cooldown)
+    FGameplayAttributeData Cooldown;
+    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, Cooldown)
+
+	UFUNCTION()
+	void OnRep_Cooldown() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Cooldown); }
 
     /** Attack range, in cm. */
-    UPROPERTY(Category = "Attributes|Attack", BlueprintReadOnly, ReplicatedUsing = OnRep_Range)
-    float Range;
+    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_Range)
+    FGameplayAttributeData Range;
+    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, Range)
+
     UFUNCTION()
-    void OnRep_Range();
-    static const FGameplayAttribute& RangeAttribute();
+    void OnRep_Range() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Range); }
 
     /**
      * The OutgoingDamageMultiplier of a target is multiplied with incoming damage to modify the loss of hit points of
      * the attacked unit.
      */
-    UPROPERTY(Category = "Attributes|Attack", BlueprintReadOnly, ReplicatedUsing = OnRep_OutgoingDamageMultiplier)
-    float OutgoingDamageMultiplier;
+    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_OutgoingDamageMultiplier)
+    FGameplayAttributeData OutgoingDamageMultiplier;
+    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, OutgoingDamageMultiplier)
+
     UFUNCTION()
-    void OnRep_OutgoingDamageMultiplier();
-    static const FGameplayAttribute& OutgoingDamageMultiplierAttribute();
+    void OnRep_OutgoingDamageMultiplier() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, OutgoingDamageMultiplier); }
 
     //~ Begin UAttributeSet Interface
     virtual bool ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const override;

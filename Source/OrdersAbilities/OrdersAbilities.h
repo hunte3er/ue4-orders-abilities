@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Stats/Stats.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogRTS, Log, All);
+ORDERSABILITIES_API DECLARE_LOG_CATEGORY_EXTERN(LogRTS, Log, All);
 
 DECLARE_STATS_GROUP(TEXT("RTS"), STATGROUP_RTS, STATCAT_Advanced);

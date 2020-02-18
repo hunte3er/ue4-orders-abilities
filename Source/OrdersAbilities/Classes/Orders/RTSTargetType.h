@@ -2,24 +2,22 @@
 
 #include "CoreMinimal.h"
 
-/**
- * The possible target types of an order.
- */
-UENUM(BlueprintType)
-enum class ERTSTargetType : uint8
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class ERTSTargetTypeFlags : uint8
 {
     /** No specific target (AOE, Aura or automatically applied to self). */
-    NONE,
+    NONE = 0,
 
     /** Order needs an actor as target. */
-    ACTOR,
+    ACTOR = 1 << 0,
 
     /** Order needs vector location as target. */
-    LOCATION,
+    LOCATION = 1 << 1,
 
     /** Order needs vector location that is used together with the unit location as a direction. */
-    DIRECTION,
+    DIRECTION = 1 << 2,
 
     /** Can't be activated. */
-    PASSIVE
+    PASSIVE = 1 << 3
 };
+ENUM_CLASS_FLAGS(ERTSTargetTypeFlags)

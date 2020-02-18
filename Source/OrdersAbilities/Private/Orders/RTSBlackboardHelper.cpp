@@ -12,38 +12,32 @@ const FName URTSBlackboardHelper::BLACKBOARD_KEY_INDEX = TEXT("Order_Index");
 const FName URTSBlackboardHelper::BLACKBOARD_KEY_RANGE = TEXT("Order_Range");
 const FName URTSBlackboardHelper::BLACKBOARD_KEY_HOME_LOCATION = TEXT("Order_HomeLocation");
 
-TSubclassOf<URTSOrder> URTSBlackboardHelper::GetBlackboardOrderType(UBTNode* NodeOwner)
+TSubclassOf<URTSOrder> URTSBlackboardHelper::GetBlackboardOrderType(UBlackboardComponent* BlackboardComp)
 {
-    UBlackboardComponent* BlackboardComp = UBTFunctionLibrary::GetOwnersBlackboard(NodeOwner);
     return BlackboardComp ? BlackboardComp->GetValueAsClass(BLACKBOARD_KEY_ORDER_TYPE) : nullptr;
 }
 
-FVector URTSBlackboardHelper::GetBlackboardOrderLocation(UBTNode* NodeOwner)
+FVector URTSBlackboardHelper::GetBlackboardOrderLocation(UBlackboardComponent* BlackboardComp)
 {
-    UBlackboardComponent* BlackboardComp = UBTFunctionLibrary::GetOwnersBlackboard(NodeOwner);
     return BlackboardComp ? BlackboardComp->GetValueAsVector(BLACKBOARD_KEY_LOCATION) : FVector::ZeroVector;
 }
 
-AActor* URTSBlackboardHelper::GetBlackboardOrderTarget(UBTNode* NodeOwner)
+AActor* URTSBlackboardHelper::GetBlackboardOrderTarget(UBlackboardComponent* BlackboardComp)
 {
-    UBlackboardComponent* BlackboardComp = UBTFunctionLibrary::GetOwnersBlackboard(NodeOwner);
     return BlackboardComp ? Cast<AActor>(BlackboardComp->GetValueAsObject(BLACKBOARD_KEY_TARGET)) : nullptr;
 }
 
-int32 URTSBlackboardHelper::GetBlackboardOrderIndex(UBTNode* NodeOwner)
+int32 URTSBlackboardHelper::GetBlackboardOrderIndex(UBlackboardComponent* BlackboardComp)
 {
-    UBlackboardComponent* BlackboardComp = UBTFunctionLibrary::GetOwnersBlackboard(NodeOwner);
     return BlackboardComp ? BlackboardComp->GetValueAsInt(BLACKBOARD_KEY_INDEX) : 0;
 }
 
-float URTSBlackboardHelper::GetBlackboardOrderRange(UBTNode* NodeOwner)
+float URTSBlackboardHelper::GetBlackboardOrderRange(UBlackboardComponent* BlackboardComp)
 {
-    UBlackboardComponent* BlackboardComp = UBTFunctionLibrary::GetOwnersBlackboard(NodeOwner);
     return BlackboardComp ? BlackboardComp->GetValueAsFloat(BLACKBOARD_KEY_RANGE) : 0.0f;
 }
 
-FVector URTSBlackboardHelper::GetBlackboardOrderHomeLocation(UBTNode* NodeOwner)
+FVector URTSBlackboardHelper::GetBlackboardOrderHomeLocation(UBlackboardComponent* BlackboardComp)
 {
-    UBlackboardComponent* BlackboardComp = UBTFunctionLibrary::GetOwnersBlackboard(NodeOwner);
     return BlackboardComp ? BlackboardComp->GetValueAsVector(BLACKBOARD_KEY_HOME_LOCATION) : FVector::ZeroVector;
 }

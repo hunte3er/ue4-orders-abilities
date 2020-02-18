@@ -1,20 +1,20 @@
 #include "AbilitySystem/RTSAbilitySystemHelper.h"
 
-#include "OrdersAbilities.h"
+#include "OrdersAbilities/OrdersAbilities.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
-#include "GameplayAbility.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameplayAbilitySpec.h"
 #include "GameplayCueManager.h"
 #include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagsManager.h"
-#include "UnrealType.h"
-#include "UObjectIterator.h"
+#include "UObject/UnrealType.h"
+#include "UObject/UObjectIterator.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/SCS_Node.h"
 #include "Kismet/DataTableFunctionLibrary.h"
@@ -24,6 +24,8 @@
 #include "AbilitySystem/RTSGameplayEffect.h"
 #include "AbilitySystem/RTSGlobalTags.h"
 #include "Orders/RTSOrderTargetData.h"
+#include "RTSOwnerComponent.h"
+#include "RTSPlayerState.h"
 
 
 // ---------------------------------------------------------------------------------------------------
@@ -81,8 +83,6 @@ URTSAbilitySystemHelper::GetBasicAttackAbilities(const UAbilitySystemComponent* 
 
     TArray<TSubclassOf<UGameplayAbility>> BasicAttackAbilities;
 
-    URTSGameplayAbility* GameplayAbility;
-
     for (TSubclassOf<UGameplayAbility> Ability : Abilities)
     {
         if (Ability == nullptr)
@@ -90,20 +90,49 @@ URTSAbilitySystemHelper::GetBasicAttackAbilities(const UAbilitySystemComponent* 
             continue;
         }
 
-        GameplayAbility = Ability->GetDefaultObject<URTSGameplayAbility>();
+        URTSGameplayAbility* GameplayAbility = Ability->GetDefaultObject<URTSGameplayAbility>();
 
         if (!IsValid(GameplayAbility))
         {
             continue;
         }
 
-        if (GameplayAbility->GetEventTriggerTag() == URTSGlobalTags::Event_Attack())
+        if (GameplayAbility->GetEventTriggerTag().MatchesTag(URTSGlobalTags::Event_Attack()))
         {
             BasicAttackAbilities.Add(Ability);
         }
     }
 
     return BasicAttackAbilities;
+}
+
+TArray<TSubclassOf<UGameplayAbility>> URTSAbilitySystemHelper::GetOrderAbilities(const UAbilitySystemComponent* AbilitySystem)
+{
+	TArray<TSubclassOf<UGameplayAbility>> Abilities = GetAbilities(AbilitySystem);
+
+	TArray<TSubclassOf<UGameplayAbility>> OrderAbility;
+
+	for (TSubclassOf<UGameplayAbility> Ability : Abilities)
+	{
+		if (Ability == nullptr)
+		{
+			continue;
+		}
+
+		URTSGameplayAbility* GameplayAbility = Ability->GetDefaultObject<URTSGameplayAbility>();
+
+		if (!IsValid(GameplayAbility))
+		{
+			continue;
+		}
+
+		if (GameplayAbility->GetEventTriggerTag().MatchesTag(URTSGlobalTags::Event_OrderAbility()))
+		{
+			OrderAbility.Add(Ability);
+		}
+	}
+
+	return OrderAbility;
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -292,17 +321,6 @@ FText URTSAbilitySystemHelper::GetAbilityDescription(TSubclassOf<UGameplayAbilit
     }
 
     return GameplayAbility->GetDescription(Actor);
-}
-
-ERTSTargetType URTSAbilitySystemHelper::GetAbilityTargetType(TSubclassOf<UGameplayAbility> Ability)
-{
-    if (Ability == nullptr)
-    {
-        return ERTSTargetType::NONE;
-    }
-
-    URTSGameplayAbility* GameplayAbility = Cast<URTSGameplayAbility>(Ability->GetDefaultObject<UGameplayAbility>());
-    return GameplayAbility != nullptr ? GameplayAbility->GetTargetType() : ERTSTargetType::NONE;
 }
 
 bool URTSAbilitySystemHelper::ShouldShowAbilityAsOrderInUI(TSubclassOf<UGameplayAbility> Ability)
@@ -742,21 +760,21 @@ FGameplayTagContainer URTSAbilitySystemHelper::GetRelationshipTags(const AActor*
     else
     {
         // NOTE(np): In A Year Of Rain, we're adding more relationship tags based on the current owners of both units.
-        /* const URTSOwnerComponent* ActorOwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
-         const URTSOwnerComponent* OtherOwnerComponent = Other->FindComponentByClass<URTSOwnerComponent>();
+		const URTSOwnerComponent* ActorOwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
+		const URTSOwnerComponent* OtherOwnerComponent = Other->FindComponentByClass<URTSOwnerComponent>();
 
-         if (ActorOwnerComponent == nullptr || OtherOwnerComponent == nullptr)
-         {
-             RelationshipTags.AddTag(URTSGlobalTags::Relationship_Neutral());
-         }
+		if (ActorOwnerComponent == nullptr || OtherOwnerComponent == nullptr)
+		{
+			RelationshipTags.AddTag(URTSGlobalTags::Relationship_Neutral());
+		}
 
-         else
-         {
-             const ARTSPlayerState* ActorPlayerState = ActorOwnerComponent->GetPlayerOwner();
-             const ARTSPlayerState* OtherPlayerState = OtherOwnerComponent->GetPlayerOwner();
+		else
+		{
+			const ARTSPlayerState* ActorPlayerState = ActorOwnerComponent->GetPlayerOwner();
+			const ARTSPlayerState* OtherPlayerState = OtherOwnerComponent->GetPlayerOwner();
 
-             GetRelationshipTagsFromPlayers(ActorPlayerState, OtherPlayerState, RelationshipTags);
-         }*/
+			GetRelationshipTagsFromPlayers(ActorPlayerState, OtherPlayerState, RelationshipTags);
+		}
 
         if (!RelationshipTags.HasTag(URTSGlobalTags::Relationship_Visible()) && IsVisibleForActor(Actor, Other))
         {
@@ -767,37 +785,42 @@ FGameplayTagContainer URTSAbilitySystemHelper::GetRelationshipTags(const AActor*
     return RelationshipTags;
 }
 
-// NOTE(np): In A Year Of Rain, we're adding relationship tags based on the team assignments of both players.
-//void URTSAbilitySystemHelper::GetRelationshipTagsFromPlayers(const ARTSPlayerState* ActorPlayerState,
-//                                                             const ARTSPlayerState* OtherPlayerState,
-//                                                             FGameplayTagContainer& OutRelationshipTags)
-//{
-//    
-//    if (ActorPlayerState == nullptr || OtherPlayerState == nullptr)
-//    {
-//        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Neutral());
-//    }
-//
-//    else if (ActorPlayerState->HasArmisticeWithTeamOf(OtherPlayerState))
-//    {
-//        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Friendly());
-//    }
-//
-//    else if (!ActorPlayerState->IsSameTeamAs(OtherPlayerState))
-//    {
-//        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Hostile());
-//    }
-//
-//    else
-//    {
-//        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Friendly());
-//        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Visible());
-//        if (ActorPlayerState->PlayerIndex == OtherPlayerState->PlayerIndex)
-//        {
-//            OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_SamePlayer());
-//        }
-//    }
-//}
+void URTSAbilitySystemHelper::GetRelationshipTagsFromPlayers(const ARTSPlayerState* ActorPlayerState,
+                                                             const ARTSPlayerState* OtherPlayerState,
+                                                             FGameplayTagContainer& OutRelationshipTags)
+{
+	if (ActorPlayerState == nullptr && OtherPlayerState == nullptr)
+	{
+		OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Friendly());
+		OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Visible());
+		OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_SamePlayer());
+	}
+	
+    if (ActorPlayerState == nullptr || OtherPlayerState == nullptr)
+    {
+        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Neutral());
+    }
+
+    // else if (ActorPlayerState->HasArmisticeWithTeamOf(OtherPlayerState))
+    // {
+    //     OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Friendly());
+    // }
+
+    else if (!ActorPlayerState->IsSameTeamAs(OtherPlayerState))
+    {
+        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Hostile());
+    }
+
+    else
+    {
+        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Friendly());
+        OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Visible());
+        if (ActorPlayerState->PlayerId == OtherPlayerState->PlayerId)
+        {
+            OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_SamePlayer());
+        }
+    }
+}
 
 void URTSAbilitySystemHelper::GetSourceAndTargetTags(const AActor* SourceActor, const AActor* TargetActor,
                                                      FGameplayTagContainer& OutSourceTags,
@@ -853,17 +876,14 @@ bool URTSAbilitySystemHelper::DoesSatisfyTagRequirements(const FGameplayTagConta
                                                          const FGameplayTagContainer& RequiredTags,
                                                          const FGameplayTagContainer& BlockedTags)
 {
-    if (BlockedTags.Num() || RequiredTags.Num())
+    if (Tags.HasAny(BlockedTags))
     {
-        if (Tags.HasAny(BlockedTags))
-        {
-            return false;
-        }
+        return false;
+    }
 
-        if (!Tags.HasAll(RequiredTags))
-        {
-            return false;
-        }
+    if (!Tags.HasAll(RequiredTags))
+    {
+        return false;
     }
 
     return true;
@@ -927,8 +947,7 @@ void URTSAbilitySystemHelper::CreateGameplayEventData(AActor* Source, const FRTS
     FGameplayTagContainer InstigatorTags;
     URTSAbilitySystemHelper::GetTags(Source, InstigatorTags);
 
-    URTSGameplayAbility* RTSAbility =
-        Ability ? Cast<URTSGameplayAbility>(Ability->GetDefaultObject<UGameplayAbility>()) : nullptr;
+    URTSGameplayAbility* RTSAbility = Ability ? Cast<URTSGameplayAbility>(Ability->GetDefaultObject<UGameplayAbility>()) : nullptr;
 
     OutEventData.EventTag = RTSAbility ? RTSAbility->GetEventTriggerTag() : FGameplayTag();
     OutEventData.Instigator = Source;
@@ -938,8 +957,7 @@ void URTSAbilitySystemHelper::CreateGameplayEventData(AActor* Source, const FRTS
     OutEventData.InstigatorTags = InstigatorTags;
     OutEventData.TargetTags = TargetData.TargetTags;
     OutEventData.EventMagnitude = AbilitySystem->GetLevel();
-    OutEventData.TargetData =
-        CreateAbilityTargetDataFromOrderTargetData(Source, TargetData, GetAbilityTargetType(Ability));
+    OutEventData.TargetData = CreateAbilityTargetDataFromOrderTargetData(Source, TargetData, RTSAbility->GetTargetTypeFlags());
 }
 
 void URTSAbilitySystemHelper::CreateGameplayEventDataWithEventTag(AActor* Source, AActor* Target, FGameplayTag EventTag,
@@ -990,6 +1008,35 @@ int32 URTSAbilitySystemHelper::SendGameplayEvent(AActor* Actor, FGameplayEventDa
     return 0;
 }
 
+int32 URTSAbilitySystemHelper::SendGameplayEventWithTargetActor(AActor* Actor, FGameplayTag EventTag, AActor* TargetActor)
+{
+	if (IsValid(Actor))
+	{
+		IAbilitySystemInterface* AbilitySystemInterface = Cast<IAbilitySystemInterface>(Actor);
+		if (AbilitySystemInterface != nullptr)
+		{
+			UAbilitySystemComponent* AbilitySystemComponent = AbilitySystemInterface->GetAbilitySystemComponent();
+			if (AbilitySystemComponent != nullptr)
+			{
+				FGameplayTagContainer ActorTags;
+				FGameplayTagContainer TargetTags;
+				GetSourceAndTargetTags(Actor, TargetActor, ActorTags, TargetTags);
+
+				FGameplayEventData Payload;
+				Payload.EventTag = EventTag;
+				Payload.Target = TargetActor;
+				Payload.InstigatorTags = ActorTags;
+				Payload.TargetTags = TargetTags;
+				
+				FScopedPredictionWindow NewScopedWindow(AbilitySystemComponent, true);
+				return AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
+			}
+		}
+	}
+
+	return 0;
+}
+
 // ---------------------------------------------------------------------------------------------------
 // Curve Tables
 // ---------------------------------------------------------------------------------------------------
@@ -1019,41 +1066,37 @@ TArray<FGameplayAttribute> URTSAbilitySystemHelper::FindGameplayAttributes()
     return Attributes;
 }
 
-FGameplayAbilityTargetDataHandle URTSAbilitySystemHelper::CreateAbilityTargetDataFromOrderTargetData(
-    AActor* OrderedActor, const FRTSOrderTargetData& OrderTargetData, ERTSTargetType TargetType)
+FGameplayAbilityTargetDataHandle URTSAbilitySystemHelper::CreateAbilityTargetDataFromOrderTargetData(AActor* OrderedActor, const FRTSOrderTargetData& OrderTargetData, int32 TargetTypeFlags)
 {
-    switch (TargetType)
+    if ((TargetTypeFlags & static_cast<int32>(ERTSTargetTypeFlags::ACTOR)) != 0)
     {
-        case ERTSTargetType::ACTOR:
-        {
-            FGameplayAbilityTargetData_ActorArray* ActorData = new FGameplayAbilityTargetData_ActorArray();
-            ActorData->TargetActorArray.Add(OrderTargetData.Actor);
-            return FGameplayAbilityTargetDataHandle(ActorData);
-        }
-        case ERTSTargetType::LOCATION:
-        case ERTSTargetType::DIRECTION:
-        {
-            FTransform Transform;
-
-            FGameplayAbilityTargetingLocationInfo SourceLocation;
-            SourceLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
-            Transform.SetLocation(OrderedActor->GetActorLocation());
-            SourceLocation.LiteralTransform = Transform;
-
-            FGameplayAbilityTargetingLocationInfo TargetLocation;
-            TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
-            Transform.SetLocation(FVector(OrderTargetData.Location.X, OrderTargetData.Location.Y, 0.0f));
-            TargetLocation.LiteralTransform = Transform;
-
-            FGameplayAbilityTargetData_LocationInfo* LocationData = new FGameplayAbilityTargetData_LocationInfo();
-            LocationData->SourceLocation = SourceLocation;
-            LocationData->TargetLocation = TargetLocation;
-
-            return FGameplayAbilityTargetDataHandle(LocationData);
-        }
-        default:
-            return nullptr;
+        FGameplayAbilityTargetData_ActorArray* ActorData = new FGameplayAbilityTargetData_ActorArray();
+        ActorData->TargetActorArray.Add(OrderTargetData.Actor);
+        return FGameplayAbilityTargetDataHandle(ActorData);
     }
+
+    if ((TargetTypeFlags & static_cast<int32>(ERTSTargetTypeFlags::LOCATION | ERTSTargetTypeFlags::DIRECTION)) != 0)
+    {
+        FTransform Transform;
+
+        FGameplayAbilityTargetingLocationInfo SourceLocation;
+        SourceLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
+        Transform.SetLocation(OrderedActor->GetActorLocation());
+        SourceLocation.LiteralTransform = Transform;
+
+        FGameplayAbilityTargetingLocationInfo TargetLocation;
+        TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
+        Transform.SetLocation(FVector(OrderTargetData.Location.X, OrderTargetData.Location.Y, 0.0f));
+        TargetLocation.LiteralTransform = Transform;
+
+        FGameplayAbilityTargetData_LocationInfo* LocationData = new FGameplayAbilityTargetData_LocationInfo();
+        LocationData->SourceLocation = SourceLocation;
+        LocationData->TargetLocation = TargetLocation;
+
+        return FGameplayAbilityTargetDataHandle(LocationData);
+    }
+	
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------------------------------

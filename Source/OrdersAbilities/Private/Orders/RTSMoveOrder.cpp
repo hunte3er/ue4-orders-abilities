@@ -1,17 +1,18 @@
 #include "Orders/RTSMoveOrder.h"
 
-#include "NumericLimits.h"
-#include "TransformCalculus2D.h"
-#include "UnrealMathUtility.h"
+#include "Math/NumericLimits.h"
+#include "Math/TransformCalculus2D.h"
+#include "Math/UnrealMathUtility.h"
 #include "GameFramework/Actor.h"
 
 #include "AbilitySystem/RTSGlobalTags.h"
 #include "Orders/RTSOrderTargetData.h"
+#include "Orders/RTSOrderData.h"
 
 
 URTSMoveOrder::URTSMoveOrder()
 {
-    TargetType = ERTSTargetType::LOCATION;
+    TargetTypeFlags = static_cast<int32>(ERTSTargetTypeFlags::LOCATION);
     bIsCreatingIndividualTargetLocations = true;
 
     TagRequirements.SourceBlockedTags.AddTag(URTSGlobalTags::Status_Changing_Immobilized());
@@ -91,6 +92,17 @@ void URTSMoveOrder::CreateIndividualTargetLocations(const TArray<AActor*>& Order
 
         MovedUnits += UnitsWithCurrentRank;
     }
+}
+
+bool URTSMoveOrder::CanObeyOrder(const AActor* OrderedActor, const FRTSOrderData& OrderData, FRTSOrderErrorTags* OutErrorTags) const
+{
+    if (OrderedActor == nullptr)
+        return false;
+
+    if (OrderData.bUseLocation)
+        return true;
+	
+    return OrderData.Target != nullptr;
 }
 
 void URTSMoveOrder::CalculateFormation(int32 UnitCount, const FVector2D Direction, const FVector2D TargetLocation,

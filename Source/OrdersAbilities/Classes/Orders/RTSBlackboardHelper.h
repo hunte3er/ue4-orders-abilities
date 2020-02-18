@@ -15,22 +15,22 @@ class ORDERSABILITIES_API URTSBlackboardHelper : public UBlueprintFunctionLibrar
 
 public:
     UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
-    static TSubclassOf<URTSOrder> GetBlackboardOrderType(UBTNode* NodeOwner);
+    static TSubclassOf<URTSOrder> GetBlackboardOrderType(UBlackboardComponent* BlackboardComp);
 
     UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
-    static FVector GetBlackboardOrderLocation(UBTNode* NodeOwner);
+    static FVector GetBlackboardOrderLocation(UBlackboardComponent* BlackboardComp);
 
     UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
-    static AActor* GetBlackboardOrderTarget(UBTNode* NodeOwner);
+    static AActor* GetBlackboardOrderTarget(UBlackboardComponent* BlackboardComp);
 
     UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
-    static int32 GetBlackboardOrderIndex(UBTNode* NodeOwner);
+    static int32 GetBlackboardOrderIndex(UBlackboardComponent* BlackboardComp);
 
     UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
-    static float GetBlackboardOrderRange(UBTNode* NodeOwner);
+    static float GetBlackboardOrderRange(UBlackboardComponent* BlackboardComp);
 
     UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
-    static FVector GetBlackboardOrderHomeLocation(UBTNode* NodeOwner);
+    static FVector GetBlackboardOrderHomeLocation(UBlackboardComponent* BlackboardComp);
 
     static const FName BLACKBOARD_KEY_ORDER_TYPE;
     static const FName BLACKBOARD_KEY_LOCATION;

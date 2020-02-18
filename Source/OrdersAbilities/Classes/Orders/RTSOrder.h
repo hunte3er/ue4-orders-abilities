@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Text.h"
+#include "Internationalization/Text.h"
 #include "UObject/NoExportTypes.h"
 #include "Orders/RTSOrderGroupExecutionType.h"
 #include "Orders/RTSOrderPreviewData.h"
@@ -12,6 +12,7 @@
 #include "Orders/RTSTargetType.h"
 #include "RTSOrder.generated.h"
 
+struct FRTSOrderData;
 class AActor;
 class UTexture2D;
 struct FRTSOrderErrorTags;
@@ -32,6 +33,10 @@ public:
     /** Whether the specified actor can obey this kind of order. */
     virtual bool CanObeyOrder(const AActor* OrderedActor, int32 Index,
                               FRTSOrderErrorTags* OutErrorTags = nullptr) const;
+
+    /** Whether the specified actor can obey this kind of order. */
+    virtual bool CanObeyOrder(const AActor* OrderedActor, const FRTSOrderData& OrderData,
+        FRTSOrderErrorTags* OutErrorTags = nullptr) const;
 
     /** Whether the specified actor and/or location is a valid target for this order. */
     virtual bool IsValidTarget(const AActor* OrderedActor, const FRTSOrderTargetData& TargetData, int32 Index,
@@ -55,7 +60,10 @@ public:
     virtual void OrderCanceled(AActor* OrderedActor, const FRTSOrderTargetData& TargetData, int32 Index) const;
 
     /** Gets the target type this order is using. */
-    virtual ERTSTargetType GetTargetType(const AActor* OrderedActor, int32 Index) const;
+    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, int32 InFlag) const;
+
+	/** Gets the target type this order is using. */
+    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const;
 
     /** Whether this order type creates individual target locations for a group of actors */
     virtual bool IsCreatingIndividualTargetLocations(const AActor* OrderedActor, int32 Index) const;
@@ -158,4 +166,8 @@ private:
     /** Order to issue instead if the player specified an invalid target for this one. */
     UPROPERTY(Category = "RTS", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     TSoftClassPtr<URTSOrder> FallbackOrder;
+
+	/** Details about the preview for this ability while choosing a target. */
+	UPROPERTY(Category = "RTS Targeting", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	FRTSOrderPreviewData OrderPreviewData;
 };

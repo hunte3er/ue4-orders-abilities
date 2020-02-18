@@ -4,7 +4,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BehaviorTreeTypes.h"
 #include "Orders/RTSOrderData.h"
-#include "RTSCharacterAIController.generated.h"
+#include "OrdersAbilitiesAIController.generated.h"
 
 class URTSAttackComponent;
 class URTSOrder;
@@ -16,13 +16,13 @@ class URTSContinueConstructionOrder;
  * AI controller that drives RTS unit movement and orders.
  */
 UCLASS()
-class ORDERSABILITIES_API ARTSCharacterAIController : public AAIController
+class ORDERSABILITIES_API AOrdersAbilitiesAIController : public AAIController
 {
     GENERATED_BODY()
 
 public:
     /** Constructor that takes an ObjectInitializer. */
-    ARTSCharacterAIController(const FObjectInitializer& ObjectInitializer);
+    AOrdersAbilitiesAIController(const FObjectInitializer& ObjectInitializer);
 
     /** Gets the building class of the current order. */
     UFUNCTION(BlueprintPure)
@@ -50,7 +50,7 @@ public:
     FVector GetHomeLocation();
 
 protected:
-    virtual void Possess(APawn* InPawn) override;
+    virtual void OnPossess(APawn* InPawn) override;
 
 private:
     /** Collision object types that are used to detect attack targets. */

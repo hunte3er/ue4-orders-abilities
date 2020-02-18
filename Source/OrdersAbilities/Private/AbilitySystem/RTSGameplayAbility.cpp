@@ -1,4 +1,5 @@
 #include "AbilitySystem/RTSGameplayAbility.h"
+#include "AbilitySystem/RTSGlobalTags.h"
 
 
 URTSGameplayAbility::URTSGameplayAbility(const FObjectInitializer& ObjectInitializer)
@@ -22,11 +23,17 @@ URTSGameplayAbility::URTSGameplayAbility(const FObjectInitializer& ObjectInitial
     bHumanPlayerAutoAbility = false;
     bHumanPlayerAutoAutoAbilityInitialState = false;
     bAIPlayerAutoAbility = true;
+
+	SourceRequiredTags.AddTag(URTSGlobalTags::Status_Changing_IsAlive()); 
+	TargetRequiredTags.AddTag(URTSGlobalTags::Status_Changing_IsAlive());
+
+    bInstancedAbility = false;
+    InstancingPolicy = bInstancedAbility ? EGameplayAbilityInstancingPolicy::InstancedPerActor : EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 }
 
-ERTSTargetType URTSGameplayAbility::GetTargetType() const
+bool URTSGameplayAbility::IsTargetTypeFlagChecked(ERTSTargetTypeFlags InFlag) const
 {
-    return TargetType;
+    return (TargetTypeFlags & static_cast<int32>(InFlag)) != 0;
 }
 
 ERTSOrderGroupExecutionType URTSGameplayAbility::GetGroupExecutionType() const
@@ -120,6 +127,12 @@ bool URTSGameplayAbility::IsTargetScoreOverriden() const
 bool URTSGameplayAbility::AreAbilityTasksActive() const
 {
     return ActiveTasks.Num() > 0;
+}
+
+void URTSGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	CurrentEventData = *TriggerEventData;
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 
 bool URTSGameplayAbility::ShouldActivateAbility(ENetRole Role) const

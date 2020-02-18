@@ -15,7 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRTSOrderComponentOrderChangedSignat
 /**
  * Manages the orders for a RTSChracter or RTSPawn
  */
-UCLASS()
+UCLASS(meta = (BlueprintSpawnableComponent))
 class ORDERSABILITIES_API URTSOrderComponent : public UActorComponent
 {
     GENERATED_BODY()
@@ -62,6 +62,7 @@ public:
     UFUNCTION(Category = RTS, BlueprintPure)
     bool IsIdle() const;
 
+	UFUNCTION(Category = RTS, BlueprintPure)
     FRTSOrderData GetCurrentOrderData() const;
 
     TArray<FRTSOrderData> GetCurrentOrderDataQueue() const;

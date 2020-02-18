@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "GameplayAbility.h"
+#include "Abilities/GameplayAbility.h"
 #include "Orders/RTSAutoOrderProvider.h"
 #include "Orders/RTSOrderTypeWithIndex.h"
 #include "Orders/RTSUseAbilityOrder.h"
@@ -91,6 +91,9 @@ public:
     UFUNCTION(Category = RTS, BlueprintCallable)
     void IncreaseAbilityLevel(TSubclassOf<UGameplayAbility> AbilityClass, bool bUseAbilityPoint = true);
 
+    UFUNCTION(Category = RTS, BlueprintCallable)
+    void OnKilled(AController* PreviousOwner, AActor* DamageCauser, AActor* KilledUnit);
+
     /** Tags that are granted on begin play. */
     UFUNCTION(Category = RTS, BlueprintPure)
     FGameplayTagContainer GetInitialTags() const;
@@ -157,8 +160,8 @@ protected:
     //~ End UActorComponent Interface
 
     //~ Begin UAbilitySystemComponent Interface
-    virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec);
-    virtual void OnRemoveAbility(FGameplayAbilitySpec& AbilitySpec);
+    void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec) override;
+    void OnRemoveAbility(FGameplayAbilitySpec& AbilitySpec) override;
     //~ End UAbilitySystemComponent Interface
 
 private:
@@ -204,7 +207,7 @@ private:
      */
     UPROPERTY(Category = RTS, BlueprintReadOnly, EditAnywhere, meta = (AllowPrivateAccess = true))
     FGameplayTagContainer InitialTags;
-
+	
     /**
      * Tags the are added when the owner dies (the actor might nor be destroyed yet because it is playing its death
      * animation).
@@ -277,9 +280,6 @@ private:
 
     void InitializeAttributes(int AttributeLevel, bool bInitialInit);
     float GetAttributeValueFromCurveTable(const FGameplayAttribute& Attribute, int32 InLevel);
-
-    UFUNCTION()
-    void OnKilled(AController* PreviousOwner, AActor* DamageCauser, AActor* KilledUnit);
 
     UFUNCTION()
     void OnAnyActorKilled(AActor* KilledActor, AController* PreviousOwner, AActor* DamageCauser);

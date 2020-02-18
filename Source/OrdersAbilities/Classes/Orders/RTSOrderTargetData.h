@@ -13,7 +13,7 @@ struct ORDERSABILITIES_API FRTSOrderTargetData
     GENERATED_BODY()
 
     FRTSOrderTargetData();
-    FRTSOrderTargetData(AActor* InActor, const FVector2D InLocation, const FGameplayTagContainer& InTargetTags);
+    FRTSOrderTargetData(AActor* InActor, const FVector2D InLocation, const FGameplayTagContainer& InTargetTags = FGameplayTagContainer::EmptyContainer);
 
     /** The target actor. */
     UPROPERTY(Category = RTS, EditDefaultsOnly, BlueprintReadWrite)
@@ -22,6 +22,10 @@ struct ORDERSABILITIES_API FRTSOrderTargetData
     /** The target location. */
     UPROPERTY(Category = RTS, EditDefaultsOnly, BlueprintReadWrite)
     FVector2D Location;
+
+    /** Indicates that 'Location' is valid and should be used by this order. */
+    UPROPERTY(Category = RTS, EditAnywhere, BlueprintReadWrite, meta = (InlineEditConditionToggle = true))
+	uint8 bUseLocation : 1;
 
     /** The target tags. */
     UPROPERTY(Category = RTS, EditDefaultsOnly, BlueprintReadWrite)
