@@ -8,28 +8,28 @@
 #include "RTSBlackboardHelper.generated.h"
 
 /** Helper function for the behavior trees. */
-UCLASS(meta = (RestrictedToClasses = "BTNode"))
+UCLASS()
 class ORDERSABILITIES_API URTSBlackboardHelper : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
+    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree")
     static TSubclassOf<URTSOrder> GetBlackboardOrderType(UBlackboardComponent* BlackboardComp);
 
-    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
+    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree")
     static FVector GetBlackboardOrderLocation(UBlackboardComponent* BlackboardComp);
 
-    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
+    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree")
     static AActor* GetBlackboardOrderTarget(UBlackboardComponent* BlackboardComp);
 
-    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
+    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree")
     static int32 GetBlackboardOrderIndex(UBlackboardComponent* BlackboardComp);
 
-    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
+    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree")
     static float GetBlackboardOrderRange(UBlackboardComponent* BlackboardComp);
 
-    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree", Meta = (HidePin = "NodeOwner", DefaultToSelf = "NodeOwner"))
+    UFUNCTION(BlueprintPure, Category = "RTS|BehaviorTree")
     static FVector GetBlackboardOrderHomeLocation(UBlackboardComponent* BlackboardComp);
 
     static const FName BLACKBOARD_KEY_ORDER_TYPE;

@@ -16,7 +16,7 @@ class ORDERSABILITIES_API URTSBTDecorator_HasTargetType : public UBTDecorator
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Category = Decorator, EditDefaultsOnly, meta = (Bitmask, BitmaskEnum = ERTSTargetTypeFlags))
+	UPROPERTY(Category = Decorator, EditAnywhere, meta = (Bitmask, BitmaskEnum = ERTSTargetTypeFlags))
 	int32 TargetTypeFlags;
 
 	virtual bool CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const override;

@@ -55,7 +55,7 @@ bool URTSOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index,
 
 bool URTSOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const
 {
-    return false;
+    return IsTargetTypeFlagChecked(OrderedActor, Index, StaticCast<int32>(InFlag));
 }
 
 bool URTSOrder::IsCreatingIndividualTargetLocations(const AActor* OrderedActor, int32 Index) const

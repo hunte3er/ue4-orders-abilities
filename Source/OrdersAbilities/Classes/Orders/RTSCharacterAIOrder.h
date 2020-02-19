@@ -21,7 +21,6 @@ public:
 
     //~ Begin URTSOrder Interface
     virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, int32 InFlag) const override;
-    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const override;
     virtual bool IsCreatingIndividualTargetLocations(const AActor* OrderedActor, int32 Index) const override;
     virtual ERTSOrderGroupExecutionType GetGroupExecutionType(const AActor* OrderedActor, int32 Index) const override;
     //~ End URTSOrder Interface

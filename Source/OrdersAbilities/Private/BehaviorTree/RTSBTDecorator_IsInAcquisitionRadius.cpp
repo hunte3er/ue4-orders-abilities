@@ -29,7 +29,18 @@ bool URTSBTDecorator_IsInAcquisitionRadius::CalculateRawConditionValue(UBehavior
 	AActor* Target = Cast<AActor>(Blackboard->GetValueAsObject(URTSBlackboardHelper::BLACKBOARD_KEY_TARGET));
 
 	TArray<AActor*> ActorsInRange;
-	URTSOrderHelper::FindActors(Pawn->GetWorld(), Radius, Pawn->GetActorLocation(), ActorsInRange);
+
+	TSubclassOf<URTSOrder> OrderType = URTSBlackboardHelper::GetBlackboardOrderType(Blackboard);
+	int32 OrderIndex = URTSBlackboardHelper::GetBlackboardOrderIndex(Blackboard);
+	float AcquisitionRadius = Radius;
+
+	float AcquisitionRadiusOverride;
+	if (URTSOrderHelper::GetAcquisitionRadiusOverride(OrderType.Get(), Pawn, OrderIndex, AcquisitionRadiusOverride))
+	{
+		AcquisitionRadius = AcquisitionRadiusOverride;
+	}
+	
+	URTSOrderHelper::FindActors(Pawn->GetWorld(), AcquisitionRadius, Pawn->GetActorLocation(), ActorsInRange);
 	
 	return ActorsInRange.Contains(Target);
 }

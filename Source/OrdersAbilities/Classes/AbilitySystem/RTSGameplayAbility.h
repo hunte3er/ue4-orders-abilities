@@ -67,6 +67,7 @@ public:
 
     /** Gets the target type of this ability. */
     uint8 GetTargetTypeFlags() const { return TargetTypeFlags; }
+    bool IsTargetTypeFlagChecked(int32 InFlag) const;
     bool IsTargetTypeFlagChecked(ERTSTargetTypeFlags InFlag) const;
 
     /** Gets the group execution type this ability. */

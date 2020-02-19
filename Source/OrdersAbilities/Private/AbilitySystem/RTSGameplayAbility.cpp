@@ -31,9 +31,15 @@ URTSGameplayAbility::URTSGameplayAbility(const FObjectInitializer& ObjectInitial
     InstancingPolicy = bInstancedAbility ? EGameplayAbilityInstancingPolicy::InstancedPerActor : EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 }
 
+bool URTSGameplayAbility::IsTargetTypeFlagChecked(int32 InFlag) const
+{
+	// UE_LOG(LogTemp, Warning, TEXT("%d | %d"), TargetTypeFlags, InFlag);
+    return (TargetTypeFlags & InFlag) != 0;
+}
+
 bool URTSGameplayAbility::IsTargetTypeFlagChecked(ERTSTargetTypeFlags InFlag) const
 {
-    return (TargetTypeFlags & static_cast<int32>(InFlag)) != 0;
+    return IsTargetTypeFlagChecked(StaticCast<int32>(InFlag));
 }
 
 ERTSOrderGroupExecutionType URTSGameplayAbility::GetGroupExecutionType() const
@@ -131,7 +137,11 @@ bool URTSGameplayAbility::AreAbilityTasksActive() const
 
 void URTSGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	CurrentEventData = *TriggerEventData;
+    if (TriggerEventData)
+    {
+        CurrentEventData = *TriggerEventData;
+    }
+	
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 

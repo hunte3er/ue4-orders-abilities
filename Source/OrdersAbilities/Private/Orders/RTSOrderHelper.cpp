@@ -206,9 +206,17 @@ bool URTSOrderHelper::IsValidTarget(TSoftClassPtr<URTSOrder> OrderType, const AA
                 return bAllowLocation ? Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags) : false;
             }
         }
+
+        return Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags);
     }
 
-	return Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags);
+    if (bAllowLocation || Order->IsTargetTypeFlagChecked(OrderedActor, Index, ERTSTargetTypeFlags::PASSIVE | ERTSTargetTypeFlags::NONE))
+    {
+        return Order->IsValidTarget(OrderedActor, TargetData, Index, OutErrorTags);
+    }
+
+    OutErrorTags->ErrorTags.AddTag(URTSGlobalTags::AbilityActivationFailure_NoTarget());
+    return false;
 }
 
 void URTSOrderHelper::CreateIndividualTargetLocations(TSoftClassPtr<URTSOrder> OrderType,

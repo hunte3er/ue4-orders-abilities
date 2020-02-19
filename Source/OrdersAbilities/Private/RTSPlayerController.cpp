@@ -54,8 +54,35 @@ void ARTSPlayerController::SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType,
 	{
 		return;
 	}
+
+	UE_LOG(LogRTS, Log, TEXT("Set pending order %s | %d"), *InOrderType.ToString(), InIndex);
+
+	// If the order no target type, just activate the ability
+	auto Order = URTSOrderHelper::GetDefaultOrder(InOrderType);
+	if (Order->IsTargetTypeFlagChecked(*ActorWhoCanObeyOrder, InIndex, ERTSTargetTypeFlags::NONE))
+	{
+		auto OrderData = FRTSOrderData(InOrderType, InIndex);
+		
+		for (auto SelectedActor : SelectedActors)
+		{
+			if (auto SelectedPawn = Cast<APawn>(SelectedActor))
+			{
+				if (URTSOrderHelper::CheckOrder(SelectedPawn, OrderData).IsEmpty())
+				{
+					ServerIssuePendingOrder(SelectedPawn, OrderData, IsInputKeyDown(EKeys::LeftShift));
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Failed to issue order with target type NONE"));
+				}
+			}
+		}
+
+		return;
+	}
 	
 	PendingOrder = FRTSOrderData(InOrderType, InIndex);
+	
 	bHasPendingOrder = true;
 	PendingOrderPreviewData = URTSOrderHelper::GetOrderPreviewData(InOrderType, SelectedActors[0], InIndex);
 	if (PendingOrderPreviewData.GetOrderPreviewClass() != nullptr)
@@ -136,6 +163,10 @@ bool ARTSPlayerController::IssuePendingOrder(TArray<FHitResult>& HitResults)
 			{
 				RemovePendingOrder();
 				return true;
+			}
+			else
+			{
+				UE_LOG(LogRTS, Log, TEXT("Failed to issue pending order"));
 			}
 		}
 	}
@@ -1132,7 +1163,15 @@ void ARTSPlayerController::PlayerTick(float DeltaTime)
 		for (auto Actor : SelectedActors)
 		{
 			PendingOrder.Target = HoveredActor;
+			PendingOrder.bUseLocation = false;
+			if (URTSOrderHelper::CheckOrder(Actor, PendingOrder).IsEmpty())
+			{
+				bHasValidActor = true;
+				break;
+			}
+
 			PendingOrder.Location = FVector2D(HoveredWorldPosition);
+			PendingOrder.bUseLocation = true;
 			if (URTSOrderHelper::CheckOrder(Actor, PendingOrder).IsEmpty())
 			{
 				bHasValidActor = true;

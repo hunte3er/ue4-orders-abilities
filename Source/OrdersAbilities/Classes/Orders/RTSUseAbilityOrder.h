@@ -25,7 +25,7 @@ public:
     //~ Begin URTSOrder Interface
     virtual bool CanObeyOrder(const AActor* OrderedActor, int32 Index,
                               FRTSOrderErrorTags* OutErrorTags = nullptr) const override;
-    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const override;
+    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, int32 InFlag) const override;
     virtual void IssueOrder(AActor* OrderedActor, const FRTSOrderTargetData& TargetData, int32 Index,
                             FRTSOrderCallback Callback, const FVector& HomeLocation) const override;
     virtual UTexture2D* GetNormalIcon(const AActor* OrderedActor, int32 Index) const override;

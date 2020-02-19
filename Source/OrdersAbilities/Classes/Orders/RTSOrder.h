@@ -63,7 +63,7 @@ public:
     virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, int32 InFlag) const;
 
 	/** Gets the target type this order is using. */
-    virtual bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const;
+    bool IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const;
 
     /** Whether this order type creates individual target locations for a group of actors */
     virtual bool IsCreatingIndividualTargetLocations(const AActor* OrderedActor, int32 Index) const;

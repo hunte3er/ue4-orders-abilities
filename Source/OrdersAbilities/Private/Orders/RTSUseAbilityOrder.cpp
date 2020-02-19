@@ -69,7 +69,7 @@ bool URTSUseAbilityOrder::CanObeyOrder(const AActor* OrderedActor, int32 Index,
     return false;
 }
 
-bool URTSUseAbilityOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, ERTSTargetTypeFlags InFlag) const
+bool URTSUseAbilityOrder::IsTargetTypeFlagChecked(const AActor* OrderedActor, int32 Index, int32 InFlag) const
 {
 	if (OrderedActor == nullptr)
 	{
@@ -97,16 +97,23 @@ void URTSUseAbilityOrder::IssueOrder(AActor* OrderedActor, const FRTSOrderTarget
         return;
     }
 
-    const URTSAbilitySystemComponent* AbilitySystem = OrderedActor->FindComponentByClass<URTSAbilitySystemComponent>();
+    URTSAbilitySystemComponent* AbilitySystem = OrderedActor->FindComponentByClass<URTSAbilitySystemComponent>();
     UGameplayAbility* Ability = GetAbility(AbilitySystem, Index);
+    if (!Ability)
+    {
+        UE_LOG(LogRTS, Error, TEXT("Ability is invalid."));
+        Callback.Broadcast(ERTSOrderResult::FAILED);
+        return;
+    }
 
     if (GetOrderProcessPolicy(OrderedActor, Index) == ERTSOrderProcessPolicy::INSTANT)
     {
-        FGameplayEventData EventData;
-        URTSAbilitySystemHelper::CreateGameplayEventData(OrderedActor, TargetData, Ability->GetClass(), EventData);
+        // FGameplayEventData EventData;
+        // URTSAbilitySystemHelper::CreateGameplayEventData(OrderedActor, TargetData, Ability->GetClass(), EventData);
 
-        int32 TriggeredAbilities = URTSAbilitySystemHelper::SendGameplayEvent(OrderedActor, EventData);
-        if (TriggeredAbilities > 0)
+        // int32 TriggeredAbilities = URTSAbilitySystemHelper::SendGameplayEvent(OrderedActor, EventData);
+        // if (TriggeredAbilities > 0)
+        if (AbilitySystem->TryActivateAbilityByClass(Ability->GetClass()))
         {
             Callback.Broadcast(ERTSOrderResult::SUCCEEDED);
         }

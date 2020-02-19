@@ -29,7 +29,9 @@ EBTNodeResult::Type URTSBTTask_UseAbility::ExecuteTask(UBehaviorTreeComponent& O
 	if (!Abilities.IsValidIndex(AbilityIndex))
 		return EBTNodeResult::Failed;
 
-	MyAbility = Abilities[AbilityIndex]->GetDefaultObject<UGameplayAbility>();
+	const TSubclassOf<UGameplayAbility> AbilityClass = Abilities[AbilityIndex];
+	
+	MyAbility = AbilityClass->GetDefaultObject<UGameplayAbility>();
 
 	const FVector2D Location = FVector2D(BB->GetValueAsVector(URTSBlackboardHelper::BLACKBOARD_KEY_LOCATION));
 	AActor* Target = Cast<AActor>(BB->GetValueAsObject(URTSBlackboardHelper::BLACKBOARD_KEY_TARGET));
@@ -38,14 +40,21 @@ EBTNodeResult::Type URTSBTTask_UseAbility::ExecuteTask(UBehaviorTreeComponent& O
 
 	FGameplayEventData EventData;
 	URTSAbilitySystemHelper::CreateGameplayEventData(Pawn, TargetData, MyAbility->GetClass(), EventData);
-	
-	int32 TriggeredAbilities = URTSAbilitySystemHelper::SendGameplayEvent(Pawn, EventData);
-	if (TriggeredAbilities > 0)
+
+	if (MyAbilitySystem->TryActivateAbilityByClass(AbilityClass))
 	{
 		MyAbilitySystem->OnGameplayAbilityEnded.RemoveDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
 		MyAbilitySystem->OnGameplayAbilityEnded.AddDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
 		return EBTNodeResult::InProgress;
 	}
+	
+	// int32 TriggeredAbilities = URTSAbilitySystemHelper::SendGameplayEvent(Pawn, EventData);
+	// if (TriggeredAbilities > 0)
+	// {
+	// 	MyAbilitySystem->OnGameplayAbilityEnded.RemoveDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
+	// 	MyAbilitySystem->OnGameplayAbilityEnded.AddDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
+	// 	return EBTNodeResult::InProgress;
+	// }
 	
 	return EBTNodeResult::Failed;
 }
