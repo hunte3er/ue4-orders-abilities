@@ -165,7 +165,10 @@ protected:
     //~ End UAbilitySystemComponent Interface
 
 private:
-    /**
+    UPROPERTY(Category = RTS, BlueprintReadOnly, EditDefaultsOnly, meta = (AllowPrivateAccess = true))
+    UCurveTable* InitialAttributesTable;
+	
+	/**
      * Tag that is associated with the owner of this component. This is used to look up the attribute values inside the
      * data tables. In this context the last name of the tag is describing the group inside the curve table.
      *

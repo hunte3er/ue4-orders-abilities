@@ -20,7 +20,7 @@ class ORDERSABILITIES_API URTSAttackAttributeSet : public URTSAttributeSet
     //  GameplayEffects.
 public:
     static const float MAX_DAMAGE;
-    static const float MAX_COOLDOWN;
+    static const float MAX_AttackRate;
     static const float MAX_RANGE;
     static const float MAX_OUTGOING_DAMAGE_MULTIPLIER;
 
@@ -43,20 +43,28 @@ public:
     void OnRep_AttackDamageHigh() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, AttackDamageHigh); }
 
     /** Time before the attack can be used again, in seconds. */
-    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_Cooldown)
-    FGameplayAttributeData Cooldown;
-    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, Cooldown)
+    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_AttackRate)
+    FGameplayAttributeData AttackRate;
+    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, AttackRate)
 
 	UFUNCTION()
-	void OnRep_Cooldown() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Cooldown); }
+	void OnRep_AttackRate() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, AttackRate); }
 
-    /** Attack range, in cm. */
+    /** Range Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_Range)
     FGameplayAttributeData Range;
     ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, Range)
 
     UFUNCTION()
     void OnRep_Range() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, Range); }
+
+    /** CooldownReduction Attribute */
+    UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_CooldownReduction)
+    FGameplayAttributeData CooldownReduction;
+    ATTRIBUTE_ACCESSORS(URTSAttackAttributeSet, CooldownReduction)
+
+    UFUNCTION()
+    void OnRep_CooldownReduction() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSAttackAttributeSet, CooldownReduction); }
 
     /**
      * The OutgoingDamageMultiplier of a target is multiplied with incoming damage to modify the loss of hit points of

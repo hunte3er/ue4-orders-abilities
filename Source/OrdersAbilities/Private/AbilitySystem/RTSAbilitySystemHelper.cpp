@@ -1254,3 +1254,15 @@ void URTSAbilitySystemHelper::ExecuteGameplayCueWithParamsUnattached(
     UAbilitySystemGlobals::Get().GetGameplayCueManager()->HandleGameplayCue(
         Actor, AreaOfEffectGameplayCue, EGameplayCueEvent::Executed, GameplayCueParameters);
 }
+
+UAttributeSet* URTSAbilitySystemHelper::FindAttributeSetOfClass(UAbilitySystemComponent* AbilitySystem, const TSubclassOf<UAttributeSet> AttributeClass)
+{
+    for (UAttributeSet* Set : AbilitySystem->SpawnedAttributes)
+    {
+        if (Set && Set->IsA(AttributeClass))
+        {
+            return Set;
+        }
+    }
+    return nullptr;
+}

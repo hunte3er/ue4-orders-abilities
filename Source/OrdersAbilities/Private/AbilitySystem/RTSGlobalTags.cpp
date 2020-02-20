@@ -435,3 +435,15 @@ const FGameplayTag& URTSGlobalTags::Container_ResourceSource()
     static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("Container.ResourceSource")));
     return Tag;
 }
+
+const FGameplayTag& URTSGlobalTags::SetByCaller_Cooldown()
+{
+    static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("SBC.Cooldown")));
+    return Tag;
+}
+
+const FGameplayTag& URTSGlobalTags::SetByCaller_Cost_Mana()
+{
+    static FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(TEXT("SBC.Cost.Mana")));
+    return Tag;
+}

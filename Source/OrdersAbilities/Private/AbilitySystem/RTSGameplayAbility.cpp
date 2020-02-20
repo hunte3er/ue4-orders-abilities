@@ -1,6 +1,10 @@
 #include "AbilitySystem/RTSGameplayAbility.h"
 #include "AbilitySystem/RTSGlobalTags.h"
-
+#include "AbilitySystemGlobals.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/RTSAbilitySystemHelper.h"
+#include "AbilitySystem/RTSAttackAttributeSet.h"
+#include "AbilitySystem/RTSResourceAttributeSet.h"
 
 URTSGameplayAbility::URTSGameplayAbility(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -26,9 +30,6 @@ URTSGameplayAbility::URTSGameplayAbility(const FObjectInitializer& ObjectInitial
 
 	SourceRequiredTags.AddTag(URTSGlobalTags::Status_Changing_IsAlive()); 
 	TargetRequiredTags.AddTag(URTSGlobalTags::Status_Changing_IsAlive());
-
-    bInstancedAbility = false;
-    InstancingPolicy = bInstancedAbility ? EGameplayAbilityInstancingPolicy::InstancedPerActor : EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 }
 
 bool URTSGameplayAbility::IsTargetTypeFlagChecked(int32 InFlag) const
@@ -209,4 +210,197 @@ void URTSGameplayAbility::GetTargetTagRequirements(FGameplayTagContainer& OutReq
 {
     OutRequiredTags.AppendTags(TargetRequiredTags);
     OutBlockedTags.AppendTags(TargetBlockedTags);
+}
+
+
+//////////////
+// Cooldown //
+//////////////
+void URTSGameplayAbility::FPGAApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
+{
+	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
+	if (CooldownGE)
+	{
+		CooldownGE->InheritableOwnedTagsContainer.CombinedTags = CooldownTags;// .AddTag(AbilityTag);
+		
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
+		{
+			FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
+			
+			const float CooldownMagnitude = GetAbilityCooldown(ActorInfo->AbilitySystemComponent.Get());
+			
+			Spec.SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cooldown(), CooldownMagnitude);
+
+			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+		}
+	}
+}
+
+bool URTSGameplayAbility::HasCooldown()
+{
+	return CooldownTags.Num() > 0;
+}
+
+void URTSGameplayAbility::CommitExecute(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
+{
+	FPGAApplyCooldown(Handle, ActorInfo, ActivationInfo);
+
+	ApplyCost(Handle, ActorInfo, ActivationInfo);
+}
+
+bool URTSGameplayAbility::CommitAbilityCooldown(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	const bool ForceCooldown)
+{
+	if (UAbilitySystemGlobals::Get().ShouldIgnoreCooldowns())
+	{
+		return true;
+	}
+
+	if (!ForceCooldown)
+	{
+		// Last chance to fail (maybe we no longer have resources to commit since we after we started this ability activation)
+		if (!CheckCooldown(Handle, ActorInfo))
+		{
+			return false;
+		}
+	}
+
+	FPGAApplyCooldown(Handle, ActorInfo, ActivationInfo);
+	return true;
+}
+
+
+bool URTSGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	UGameplayEffect* CostGE = GetCostGameplayEffect();
+	if (CostGE)
+	{
+		UAbilitySystemComponent* const AbilitySystemComponent = ActorInfo->AbilitySystemComponent.Get();
+		check(AbilitySystemComponent != nullptr);
+
+
+		FGameplayEffectSpec Spec(CostGE, MakeEffectContext(Handle, ActorInfo), GetAbilityLevel(Handle, ActorInfo));
+		ApplyCostMagnitude(ActorInfo->AbilitySystemComponent.Get(), Spec);
+		Spec.CalculateModifierMagnitudes();
+
+		if (!CanApplySpecAttributeModifiers(AbilitySystemComponent, Spec))
+		{
+			const FGameplayTag& FailTag = UAbilitySystemGlobals::Get().ActivateFailCostTag;
+
+			if (OptionalRelevantTags && FailTag.IsValid())
+			{
+				OptionalRelevantTags->AddTag(FailTag);
+			}
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+void URTSGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	UGameplayEffect* CostGE = GetCostGameplayEffect();
+	if (CostGE)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CostGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
+		{
+			FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
+
+			// float CostMagnitude = AbilityCost;
+			//
+			// if (UAbilitySystemComponent* AbilitySystem = GetAbilitySystemComponentFromActorInfo())
+			// {
+			// 	CostMagnitude /= 1.0f + AbilitySystem->GetNumericAttribute(URTSResourceAttributeSet::GetCostReductionAttribute());
+			// }
+			//
+			// Spec.SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cost_Mana(), CostMagnitude);
+
+			ApplyCostMagnitude(ActorInfo->AbilitySystemComponent.Get(), Spec);
+			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Error: Spec handle or data is invalid"));
+		}
+	}
+}
+
+float URTSGameplayAbility::GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem) const
+{
+	float CooldownMagnitude = AbilityCooldown;
+
+	if (AbilitySystem)
+	{
+		CooldownMagnitude /= 1.0f + AbilitySystem->GetNumericAttribute(URTSAttackAttributeSet::GetCooldownReductionAttribute());
+	}
+
+	return CooldownMagnitude;
+}
+
+float URTSGameplayAbility::GetAbilityCost_Implementation(UAbilitySystemComponent* AbilitySystem) const
+{
+	float CostMagnitude = AbilityCost;
+
+	if (AbilitySystem)
+	{
+		CostMagnitude /= 1.0f + AbilitySystem->GetNumericAttribute(URTSResourceAttributeSet::GetCostReductionAttribute());
+	}
+
+	return CostMagnitude;
+}
+
+const FGameplayTagContainer* URTSGameplayAbility::GetCooldownTags() const
+{
+	return &CooldownTags;
+}
+
+bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec) const
+{
+	bool bCanApplyAttributeModifiers = true;
+	
+	for (int32 ModIdx = 0; ModIdx < Spec.Modifiers.Num(); ++ModIdx)
+	{
+		const FGameplayModifierInfo& ModDef = Spec.Def->Modifiers[ModIdx];
+		const FModifierSpec& ModSpec = Spec.Modifiers[ModIdx];
+
+		// It only makes sense to check additive operators
+		if (ModDef.ModifierOp == EGameplayModOp::Additive)
+		{
+			if (!ModDef.Attribute.IsValid())
+			{
+				continue;
+			}
+
+			UAttributeSet* Set = URTSAbilitySystemHelper::FindAttributeSetOfClass(AbilitySystem, ModDef.Attribute.GetAttributeSetClass());
+
+			const float CurrentValue = ModDef.Attribute.GetNumericValueChecked(Set);
+			const float CostValue = ModSpec.GetEvaluatedMagnitude();
+
+			if (CurrentValue + CostValue < 0.f)
+			{
+				bCanApplyAttributeModifiers = false;
+			}
+		}
+	}
+
+	return bCanApplyAttributeModifiers;
+}
+
+void URTSGameplayAbility::ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& Spec) const
+{
+	check(AbilitySystem);
+
+	const float CostMagnitude = GetAbilityCost(AbilitySystem);
+
+	//UE_LOG(LogTemp, Warning, TEXT("Cost: %f"), CostMagnitude);
+
+	Spec.SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cost_Mana(), -1.0f * CostMagnitude);
+
+	Spec.CalculateModifierMagnitudes();
 }

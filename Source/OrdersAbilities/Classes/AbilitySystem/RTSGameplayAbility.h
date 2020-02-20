@@ -56,13 +56,15 @@ enum class ERTSAbilityProcessPolicy : uint8
     // clang-format on
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameplayAbilityEvent, UGameplayAbility*, Ability);
+
 /** Custom game play ability. */
-UCLASS(BlueprintType, Abstract, Blueprintable, hideCategories = (Advanced, Input))
+UCLASS(BlueprintType, Abstract, Blueprintable, hideCategories = (Input))
 class ORDERSABILITIES_API URTSGameplayAbility : public UGameplayAbility
 {
     GENERATED_BODY()
 
-public:
+public:	
     URTSGameplayAbility(const FObjectInitializer& ObjectInitializer);
 
     /** Gets the target type of this ability. */
@@ -178,11 +180,50 @@ public:
     virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
     //~ End UGameplayAbility Interface
 
-protected:
-    /** Does each actor store an instance of this ability. */
-    UPROPERTY(Category = "Ability", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bInstancedAbility;
+    /** Does the commit atomically (consume resources, do cooldowns, etc) */
+    virtual void CommitExecute(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
 
+    virtual bool CommitAbilityCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const bool ForceCooldown) override;
+
+    void FPGAApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo);
+
+    UFUNCTION(BlueprintCallable, Category = "Ability|Cooldown")
+    virtual bool HasCooldown();
+
+    UFUNCTION(BlueprintNativeEvent, Category = "Ability")
+    float GetAbilityCooldown(UAbilitySystemComponent* AbilitySystem) const;
+
+	float GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem) const;
+	
+    /** Checks cost. returns true if we can pay for the ability. False if not */
+    virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+    
+    void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
+    UFUNCTION(BlueprintNativeEvent, Category = "Ability")
+    float GetAbilityCost(UAbilitySystemComponent* AbilitySystem) const;
+
+	float GetAbilityCost_Implementation(UAbilitySystemComponent* AbilitySystem) const;
+
+    /** Returns all tags that are currently on cooldown */
+    const FGameplayTagContainer* GetCooldownTags() const override;
+
+    bool CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec) const;
+
+    void ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& CostSpec) const;
+	
+protected:
+    UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    FGameplayTagContainer CooldownTags;
+
+    /** The base cooldown of the ability */
+    UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    float AbilityCooldown;
+
+	/** The base cost of the ability */
+    UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    float AbilityCost;
+	
 	/**
      * Describes how this ability is executed. This might determine how the ability is displayed in the UI and it
      * determines how the ability is handled by the order system. Note that this has nothing todo with the effects an

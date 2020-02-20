@@ -13,12 +13,14 @@ void URTSResourceAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	DOREPLIFETIME_CONDITION_NOTIFY(URTSResourceAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(URTSResourceAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(URTSResourceAttributeSet, ManaRegen, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(URTSResourceAttributeSet, CostReduction, COND_None, REPNOTIFY_Always);
 }
 
 URTSResourceAttributeSet::URTSResourceAttributeSet()
 {
 	Mana = MaxMana = 100.0f;
 	ManaRegen = 2.0f;
+	CostReduction = 0.0f;
 }
 
 void URTSResourceAttributeSet::Init()

@@ -258,4 +258,11 @@ public:
 
     /** Container for gathering resources from. */
     static const FGameplayTag& Container_ResourceSource();
+
+    // ---------------------------------------------------------------------------------------------------
+	// Set by caller tags
+	// ---------------------------------------------------------------------------------------------------
+	
+    static const FGameplayTag& SetByCaller_Cooldown();
+    static const FGameplayTag& SetByCaller_Cost_Mana();
 };

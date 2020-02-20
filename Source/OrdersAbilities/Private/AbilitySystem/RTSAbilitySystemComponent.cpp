@@ -503,28 +503,29 @@ void URTSAbilitySystemComponent::InitializeAttributes(int AttributeLevel, bool b
 	}
 
     FName GroupName = URTSAbilitySystemHelper::GetLastTagName(NameTag);
+
+	if (InitialAttributesTable != nullptr)
+	{
+		TArray<FGameplayAttribute> AllAttributes;
+		GetAllAttributes(AllAttributes);
+		for (const FGameplayAttribute& Attribute : AllAttributes)
+		{
+			FString AttributeName = Attribute.GetName();
+			FString AttributeSetName = Attribute.GetAttributeSetClass()->GetName();
+
+			FName RowName = FName(*FString::Printf(TEXT("%s.%s.%s"), *GroupName.ToString(), *AttributeSetName, *AttributeName));
 	
-	// if (InitialAttributesTable != nullptr)
-	// {
-	// 	TArray<FGameplayAttribute> AllAttributes;
-	// 	GetAllAttributes(AllAttributes);
-	// 	for (const FGameplayAttribute& Attribute : AllAttributes)
-	// 	{
-	// 		FString AttributeName = Attribute.GetName();
-	// 		FString AttributeSetName = Attribute.GetAttributeSetClass()->GetName();
-	// 		FName RowName = FName(*FString::Printf(TEXT("%s.%s.%s"), *UnitName, *AttributeSetName, *AttributeName));
-	//
-	// 		if (FRealCurve* Curve = InitialAttributesTable->FindCurve(RowName, "", false))
-	// 		{
-	// 			float AttributeValue = Curve->Eval(0);
-	// 			UE_LOG(LogTemp, Warning, TEXT("Set attribute for %s to %f"), *RowName.ToString(), AttributeValue);
-	// 			SetNumericAttributeBase(Attribute, AttributeValue);
-	// 		}
-	// 	}
-	// }
+			if (FRealCurve* Curve = InitialAttributesTable->FindCurve(RowName, "", false))
+			{
+				float AttributeValue = Curve->Eval(0);
+				UE_LOG(LogTemp, Warning, TEXT("Set attribute for %s to %f"), *RowName.ToString(), AttributeValue);
+				SetNumericAttributeBase(Attribute, AttributeValue);
+			}
+		}
+	}
+		
 
-    FAttributeSetInitter* AttributeInitter = UAbilitySystemGlobals::Get().GetAttributeSetInitter();
-
+    // FAttributeSetInitter* AttributeInitter = UAbilitySystemGlobals::Get().GetAttributeSetInitter();
 
 	
 	// This is a work around for a bug that happens at least in the editor. It might be that the 'SpawnedAttributes'
@@ -540,9 +541,9 @@ void URTSAbilitySystemComponent::InitializeAttributes(int AttributeLevel, bool b
 
 	UE_LOG(LogRTS, Verbose, TEXT("Initializing attributes of %s with group name %s..."), *GetOwner()->GetName(), *GroupName.ToString());
 	
-	// Note that this might cause a crash when no valid paths to data tables where specified in the 'Game.ini' file.
-	//
-	AttributeInitter->InitAttributeSetDefaults(this, GroupName, AttributeLevel, bInitialInit);
+	// // Note that this might cause a crash when no valid paths to data tables where specified in the 'Game.ini' file.
+	// //
+	// AttributeInitter->InitAttributeSetDefaults(this, GroupName, AttributeLevel, bInitialInit);
  
     for (UAttributeSet* AttributeSet : SpawnedAttributes)
     {

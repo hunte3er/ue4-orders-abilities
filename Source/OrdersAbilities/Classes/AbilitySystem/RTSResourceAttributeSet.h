@@ -42,6 +42,15 @@ public:
 	UFUNCTION()
 	void OnRep_ManaRegen() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSResourceAttributeSet, ManaRegen); }
 
+	/** CostReduction Attribute */
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Resource", ReplicatedUsing = OnRep_CostReduction)
+	FGameplayAttributeData CostReduction;
+	ATTRIBUTE_ACCESSORS(URTSResourceAttributeSet, CostReduction)
+
+	UFUNCTION()
+	void OnRep_CostReduction() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSResourceAttributeSet, CostReduction); }
+
+
     //~ Begin UAttributeSet Interface
 	virtual void Init() override;
     virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;

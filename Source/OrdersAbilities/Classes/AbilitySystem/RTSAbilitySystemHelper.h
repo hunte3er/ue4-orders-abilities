@@ -403,6 +403,9 @@ public:
     static void ExecuteGameplayCueWithParamsUnattached(AActor* Actor, FGameplayTag AreaOfEffectGameplayCue,
                                                        const FGameplayCueParameters& GameplayCueParameters);
 
+    UFUNCTION(BlueprintCallable, Category = "RTS Ability|Attribute Set")
+    static UAttributeSet* FindAttributeSetOfClass(UAbilitySystemComponent* AbilitySystem, const TSubclassOf<UAttributeSet> AttributeClass);
+	
 private:
     static TArray<FGameplayAttribute> FindGameplayAttributes();
 };

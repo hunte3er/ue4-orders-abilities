@@ -8,7 +8,7 @@
 
 
 const float URTSAttackAttributeSet::MAX_DAMAGE = 10000.0f;
-const float URTSAttackAttributeSet::MAX_COOLDOWN = 10000.0f;
+const float URTSAttackAttributeSet::MAX_AttackRate = 10000.0f;
 const float URTSAttackAttributeSet::MAX_RANGE = 10000.0f;
 const float URTSAttackAttributeSet::MAX_OUTGOING_DAMAGE_MULTIPLIER = 10000.0f;
 
@@ -24,18 +24,20 @@ void URTSAttackAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
     // This is how it is done properly for attributes.
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, AttackDamageLow, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, AttackDamageHigh, COND_None, REPNOTIFY_Always);
-    DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, Cooldown, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, AttackRate, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, Range, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, OutgoingDamageMultiplier, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(URTSAttackAttributeSet, CooldownReduction, COND_None, REPNOTIFY_Always);
 }
 
 URTSAttackAttributeSet::URTSAttackAttributeSet()
 {
     AttackDamageLow = 1.0f;
     AttackDamageHigh = 2.0f;
-	Cooldown = 2.0f;
+	AttackRate = 2.0f;
 	Range = 125.0f;
 	OutgoingDamageMultiplier = 1.0f;
+    CooldownReduction = 0.0f;
 }
 
 bool URTSAttackAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const
@@ -53,9 +55,9 @@ void URTSAttackAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& At
         NewValue = FMath::Clamp(NewValue, 0.0f, MAX_DAMAGE);
     }
 
-    if (Attribute == GetCooldownAttribute())
+    if (Attribute == GetAttackRateAttribute())
     {
-        NewValue = FMath::Clamp(NewValue, 0.0f, MAX_COOLDOWN);
+        NewValue = FMath::Clamp(NewValue, 0.0f, MAX_AttackRate);
     }
 
     if (Attribute == GetRangeAttribute())

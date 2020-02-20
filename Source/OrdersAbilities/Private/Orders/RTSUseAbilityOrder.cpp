@@ -42,6 +42,11 @@ bool URTSUseAbilityOrder::CanObeyOrder(const AActor* OrderedActor, int32 Index,
 
                 FGameplayTagContainer FailureTags;
 
+                if (UGameplayAbility* PrimaryInstance = Spec.GetPrimaryInstance())
+                {
+                    Ability = PrimaryInstance;
+                }
+            	
                 // Don't pass any source and target tags to can activate ability. These tags has already been checked in
                 // 'URTSOrderHelper'. Only the activation required and activation blocked tags are checked here.
                 if (!Ability->CanActivateAbility(Spec.Handle, AbilitySystem->AbilityActorInfo.Get(), nullptr, nullptr,
