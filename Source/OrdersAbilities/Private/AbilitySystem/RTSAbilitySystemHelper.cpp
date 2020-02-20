@@ -1066,6 +1066,15 @@ TArray<FGameplayAttribute> URTSAbilitySystemHelper::FindGameplayAttributes()
     return Attributes;
 }
 
+void URTSAbilitySystemHelper::SetAbilityLevel(UAbilitySystemComponent* AbilitySystem, TSubclassOf<UGameplayAbility> Ability, int32 Level)
+{
+    if (FGameplayAbilitySpec* Spec = AbilitySystem->FindAbilitySpecFromClass(Ability))
+    {
+        Spec->Level = Level;
+        AbilitySystem->MarkAbilitySpecDirty(*Spec);
+    }
+}
+
 FGameplayAbilityTargetDataHandle URTSAbilitySystemHelper::CreateAbilityTargetDataFromOrderTargetData(AActor* OrderedActor, const FRTSOrderTargetData& OrderTargetData, int32 TargetTypeFlags)
 {
     if ((TargetTypeFlags & static_cast<int32>(ERTSTargetTypeFlags::ACTOR)) != 0)

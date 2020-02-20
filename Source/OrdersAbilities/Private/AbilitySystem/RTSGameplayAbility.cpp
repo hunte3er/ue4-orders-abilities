@@ -228,7 +228,7 @@ void URTSGameplayAbility::FPGAApplyCooldown(const FGameplayAbilitySpecHandle Han
 		{
 			FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
 			
-			const float CooldownMagnitude = GetAbilityCooldown(ActorInfo->AbilitySystemComponent.Get());
+			const float CooldownMagnitude = GetAbilityCooldown(ActorInfo->AbilitySystemComponent.Get(), Handle);
 			
 			Spec.SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cooldown(), CooldownMagnitude);
 
@@ -282,12 +282,11 @@ bool URTSGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle, con
 		UAbilitySystemComponent* const AbilitySystemComponent = ActorInfo->AbilitySystemComponent.Get();
 		check(AbilitySystemComponent != nullptr);
 
-
 		FGameplayEffectSpec Spec(CostGE, MakeEffectContext(Handle, ActorInfo), GetAbilityLevel(Handle, ActorInfo));
-		ApplyCostMagnitude(ActorInfo->AbilitySystemComponent.Get(), Spec);
+		ApplyCostMagnitude(ActorInfo->AbilitySystemComponent.Get(), Spec, Handle);
 		Spec.CalculateModifierMagnitudes();
 
-		if (!CanApplySpecAttributeModifiers(AbilitySystemComponent, Spec))
+		if (!CanApplySpecAttributeModifiers(AbilitySystemComponent, Spec, Handle))
 		{
 			const FGameplayTag& FailTag = UAbilitySystemGlobals::Get().ActivateFailCostTag;
 
@@ -321,7 +320,7 @@ void URTSGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, con
 			//
 			// Spec.SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cost_Mana(), CostMagnitude);
 
-			ApplyCostMagnitude(ActorInfo->AbilitySystemComponent.Get(), Spec);
+			ApplyCostMagnitude(ActorInfo->AbilitySystemComponent.Get(), Spec, Handle);
 			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 		}
 		else
@@ -331,10 +330,21 @@ void URTSGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, con
 	}
 }
 
-float URTSGameplayAbility::GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem) const
+float URTSGameplayAbility::GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const
 {
 	float CooldownMagnitude = AbilityCooldown;
 
+	// if a curve table entry is specified, use the attribute value as a lookup into the curve instead of using it directly
+	static const FString CalculateMagnitudeContext(TEXT("FAttributeBasedFloat::CalculateMagnitude"));
+	
+	if (FGameplayAbilitySpec* Spec = AbilitySystem->FindAbilitySpecFromHandle(Handle))
+	{
+		if (AbilityCooldownCurve.IsValid(CalculateMagnitudeContext))
+		{
+			AbilityCooldownCurve.Eval(Spec->Level, &CooldownMagnitude, CalculateMagnitudeContext);
+		}
+	}
+	
 	if (AbilitySystem)
 	{
 		CooldownMagnitude /= 1.0f + AbilitySystem->GetNumericAttribute(URTSAttackAttributeSet::GetCooldownReductionAttribute());
@@ -343,9 +353,20 @@ float URTSGameplayAbility::GetAbilityCooldown_Implementation(UAbilitySystemCompo
 	return CooldownMagnitude;
 }
 
-float URTSGameplayAbility::GetAbilityCost_Implementation(UAbilitySystemComponent* AbilitySystem) const
+float URTSGameplayAbility::GetAbilityCost_Implementation(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const
 {
 	float CostMagnitude = AbilityCost;
+
+	// if a curve table entry is specified, use the attribute value as a lookup into the curve instead of using it directly
+	static const FString CalculateMagnitudeContext(TEXT("FAttributeBasedFloat::CalculateMagnitude"));
+	
+	if (FGameplayAbilitySpec* Spec = AbilitySystem->FindAbilitySpecFromHandle(Handle))
+	{
+		if (AbilityCostCurve.IsValid(CalculateMagnitudeContext))
+		{
+			AbilityCostCurve.Eval(Spec->Level, &CostMagnitude, CalculateMagnitudeContext);
+		}
+	}
 
 	if (AbilitySystem)
 	{
@@ -360,7 +381,7 @@ const FGameplayTagContainer* URTSGameplayAbility::GetCooldownTags() const
 	return &CooldownTags;
 }
 
-bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec) const
+bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const
 {
 	bool bCanApplyAttributeModifiers = true;
 	
@@ -392,11 +413,11 @@ bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent
 	return bCanApplyAttributeModifiers;
 }
 
-void URTSGameplayAbility::ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& Spec) const
+void URTSGameplayAbility::ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const
 {
 	check(AbilitySystem);
 
-	const float CostMagnitude = GetAbilityCost(AbilitySystem);
+	const float CostMagnitude = GetAbilityCost(AbilitySystem, Handle);
 
 	//UE_LOG(LogTemp, Warning, TEXT("Cost: %f"), CostMagnitude);
 

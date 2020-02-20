@@ -10,7 +10,6 @@ Mage.RTSAttackAttributeSet.AttackDamageLow,10
 Mage.RTSAttackAttributeSet.AttackDamageHigh,50
 Mage.RTSAttackAttributeSet.CooldownReduction,0.5
 Mage.RTSDefenseAttributeSet.MaxHealth,500
-Mage.RTSResourceAttributeSet.CostReduction,.5
 Knight.RTSAttackAttributeSet.AttackRate,0.75
 Knight.RTSAttackAttributeSet.AttackDamageLow,2
 King.RTSAttackAttributeSet.AttackDamageLow,50

@@ -408,4 +408,7 @@ public:
 	
 private:
     static TArray<FGameplayAttribute> FindGameplayAttributes();
+	
+    UFUNCTION(BlueprintCallable, Category = "RTS Ability|Ability")
+    static void SetAbilityLevel(UAbilitySystemComponent* AbilitySystem, TSubclassOf<UGameplayAbility> Ability, int32 Level);
 };

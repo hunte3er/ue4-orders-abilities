@@ -191,9 +191,9 @@ public:
     virtual bool HasCooldown();
 
     UFUNCTION(BlueprintNativeEvent, Category = "Ability")
-    float GetAbilityCooldown(UAbilitySystemComponent* AbilitySystem) const;
+    float GetAbilityCooldown(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const;
 
-	float GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem) const;
+	float GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const;
 	
     /** Checks cost. returns true if we can pay for the ability. False if not */
     virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
@@ -201,16 +201,16 @@ public:
     void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
     UFUNCTION(BlueprintNativeEvent, Category = "Ability")
-    float GetAbilityCost(UAbilitySystemComponent* AbilitySystem) const;
+    float GetAbilityCost(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const;
 
-	float GetAbilityCost_Implementation(UAbilitySystemComponent* AbilitySystem) const;
+	float GetAbilityCost_Implementation(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const;
 
     /** Returns all tags that are currently on cooldown */
     const FGameplayTagContainer* GetCooldownTags() const override;
 
-    bool CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec) const;
+    bool CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const;
 
-    void ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& CostSpec) const;
+    void ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const;
 	
 protected:
     UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
@@ -220,9 +220,15 @@ protected:
     UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     float AbilityCooldown;
 
+	UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    FCurveTableRowHandle AbilityCooldownCurve;
+	
 	/** The base cost of the ability */
     UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     float AbilityCost;
+
+    UPROPERTY(Category = AttributeFloat, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    FCurveTableRowHandle AbilityCostCurve;
 	
 	/**
      * Describes how this ability is executed. This might determine how the ability is displayed in the UI and it
