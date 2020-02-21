@@ -3,8 +3,11 @@ Spider.RTSAttackAttributeSet.Damage,5
 Spider.RTSAttackAttributeSet.Range,200
 Spider.RTSDefenseAttributeSet.MaxHealth,20
 Snake.RTSAttackAttributeSet.Damage,2
-Snake.RTSAttackAttributeSet.Range,500
 Snake.RTSDefenseAttributeSet.MaxHealth,20
+Wasp.RTSAttackAttributeSet.AttackDamageLow,10
+Wasp.RTSAttackAttributeSet.AttackDamageHigh,20
+Wasp.RTSAttackAttributeSet.Range,400
+Wasp.RTSAttackAttributeSet.AttackRate,1.5
 Mage.RTSAttackAttributeSet.Range,500
 Mage.RTSAttackAttributeSet.AttackDamageLow,10
 Mage.RTSAttackAttributeSet.AttackDamageHigh,50
@@ -13,3 +16,4 @@ Mage.RTSDefenseAttributeSet.MaxHealth,500
 Knight.RTSAttackAttributeSet.AttackRate,0.75
 Knight.RTSAttackAttributeSet.AttackDamageLow,2
 King.RTSAttackAttributeSet.AttackDamageLow,50
+DummyTarget.RTSDefenseAttributeSet.MaxHealth,10000

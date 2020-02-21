@@ -24,8 +24,3 @@ Significant changes:
 3. Checkout the fpwong branch: `git checkout fpwong`
 4. Clone the helper plugin into the Plugins folder: `git clone https://github.com/fpwong/FPGameplayAbilities.git Plugins/FPGameplayAbilities`
 5. Open the .uproject
-
-# Getting the project running
-
-1. Select a skeleton for AnimBP_Mage
-1. Open the BP_OrdersAbilitiesGameMode and set the InitialActors array to a single BP_Spider

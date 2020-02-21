@@ -383,8 +383,6 @@ const FGameplayTagContainer* URTSGameplayAbility::GetCooldownTags() const
 
 bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const
 {
-	bool bCanApplyAttributeModifiers = true;
-	
 	for (int32 ModIdx = 0; ModIdx < Spec.Modifiers.Num(); ++ModIdx)
 	{
 		const FGameplayModifierInfo& ModDef = Spec.Def->Modifiers[ModIdx];
@@ -398,19 +396,28 @@ bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent
 				continue;
 			}
 
+			const float CostValue = ModSpec.GetEvaluatedMagnitude();
+			if (CostValue == 0)
+			{
+				continue;
+			}
+			
 			UAttributeSet* Set = URTSAbilitySystemHelper::FindAttributeSetOfClass(AbilitySystem, ModDef.Attribute.GetAttributeSetClass());
+			if (Set == nullptr)
+			{
+				return false;
+			}
 
 			const float CurrentValue = ModDef.Attribute.GetNumericValueChecked(Set);
-			const float CostValue = ModSpec.GetEvaluatedMagnitude();
 
 			if (CurrentValue + CostValue < 0.f)
 			{
-				bCanApplyAttributeModifiers = false;
+				return false;
 			}
 		}
 	}
 
-	return bCanApplyAttributeModifiers;
+	return true;
 }
 
 void URTSGameplayAbility::ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const
