@@ -10,6 +10,7 @@
 class UMaterialInterface;
 class UMaterialInstanceDynamic;
 class USoundCue;
+class ARTSPlayerController;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRTSSelectableComponentSelectedSignature);
@@ -29,6 +30,18 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RTS")
     UMaterialInterface* SelectionCircleMaterial;
 
+	// UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RTS")
+	// FLinearColor OwnerColor;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RTS")
+	FLinearColor FriendlyColor;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RTS")
+	FLinearColor NeutralColor;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RTS")
+	FLinearColor HostileColor;
+	
     /** Sound to play when the actor is selected. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RTS")
     USoundCue* SelectedSound;
@@ -36,10 +49,9 @@ public:
 
     virtual void BeginPlay() override;
 
-
 	/** Selects the unit for the local player. */
 	UFUNCTION(BlueprintCallable)
-	void SelectActor();
+	void SelectActor(ARTSPlayerController* SelectedBy);
 
 	/** Deselects the unit for the local player. */
 	UFUNCTION(BlueprintCallable)

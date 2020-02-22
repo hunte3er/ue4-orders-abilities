@@ -19,18 +19,6 @@ class ORDERSABILITIES_API URTSStatsAttributeSet : public URTSAttributeSet
     //  implementing a 'UGameplayEffectExecutionCalculation'.This attribute values should only be changed using
     //  GameplayEffects.
 public:
-    UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGameplayEffect> StrEffectClass;
-    FActiveGameplayEffectHandle StrEffectHandle;
-
-    UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGameplayEffect> DexEffectClass;
-    FActiveGameplayEffectHandle DexEffectHandle;
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<UGameplayEffect> IntEffectClass;
-    FActiveGameplayEffectHandle IntEffectHandle;
-	
 	URTSStatsAttributeSet();
 
     /** Str Attribute */
@@ -89,9 +77,6 @@ public:
     //~ End UAttributeSet Interface
 
     //~ Begin URTSAttributeSet Interface
-    virtual void PostInitializeProperties(bool bInitialInit) override;
     virtual void GetDefaultStatusTags(FGameplayTagContainer& OutStatusTags) const override;
     //~ End URTSAttributeSet Interface
-
-    void ApplyStatChange(float StatChange, TSubclassOf<UGameplayEffect> StatEffectClass, const FActiveGameplayEffectHandle& EffectHandle);
 };

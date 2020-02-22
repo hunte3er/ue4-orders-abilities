@@ -47,20 +47,6 @@ bool URTSStatsAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* Proper
 
 void URTSStatsAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
-    if (Attribute == GetStrAttribute())
-    {
-        ApplyStatChange(NewValue - GetStr(), StrEffectClass, StrEffectHandle);
-    }
-
-    if (Attribute == GetDexAttribute())
-    {
-        ApplyStatChange(NewValue - GetDex(), DexEffectClass, DexEffectHandle);
-    }
-
-    if (Attribute == GetIntAttribute())
-    {
-        ApplyStatChange(NewValue - GetInt(), IntEffectClass, IntEffectHandle);
-    }
 }
 
 void URTSStatsAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
@@ -89,58 +75,7 @@ void URTSStatsAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
  //    }
 }
 
-void URTSStatsAttributeSet::PostInitializeProperties(bool bInitialInit)
-{
-    if (bInitialInit)
-    {
-        if (IsValid(StrEffectClass))
-        {
-            UGameplayEffect* StrEffect = StrEffectClass.GetDefaultObject();
-            FGameplayEffectSpecHandle SpecHandle = UAbilitySystemBlueprintLibrary::MakeSpecHandle(StrEffect, GetOwningActor(), GetOwningActor());
-            SpecHandle.Data->StackCount = FMath::FloorToInt(GetStr());
-            StrEffectHandle = GetOwningAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-        }
-
-        if (IsValid(DexEffectClass))
-        {
-            UGameplayEffect* DexEffect = DexEffectClass.GetDefaultObject();
-            FGameplayEffectSpecHandle SpecHandle = UAbilitySystemBlueprintLibrary::MakeSpecHandle(DexEffect, GetOwningActor(), GetOwningActor());
-            SpecHandle.Data->StackCount = FMath::FloorToInt(GetDex());
-            DexEffectHandle = GetOwningAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-        }
-
-        if (IsValid(IntEffectClass))
-        {
-            UGameplayEffect* IntEffect = IntEffectClass.GetDefaultObject();
-            FGameplayEffectSpecHandle SpecHandle = UAbilitySystemBlueprintLibrary::MakeSpecHandle(IntEffect, GetOwningActor(), GetOwningActor());
-            SpecHandle.Data->StackCount = FMath::FloorToInt(GetInt());
-            IntEffectHandle = GetOwningAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-        }
-    }
-}
-
 void URTSStatsAttributeSet::GetDefaultStatusTags(FGameplayTagContainer& OutStatusTags) const
 {
     OutStatusTags.AddTag(URTSGlobalTags::Status_Permanent_HasStats());
-}
-
-void URTSStatsAttributeSet::ApplyStatChange(float StatChange, TSubclassOf<UGameplayEffect> StatEffectClass, const FActiveGameplayEffectHandle& EffectHandle)
-{
-    UGameplayEffect* StatEffect = StatEffectClass.GetDefaultObject();
-	if (!StatEffect)
-	{
-		UE_LOG(LogRTS, Error, TEXT("%s: Invalid Stat Effect"), TEXT(__FUNCTION__));
-        return;
-	}
-	
-	if (StatChange > 0)
-	{		
-        FGameplayEffectSpecHandle SpecHandle = UAbilitySystemBlueprintLibrary::MakeSpecHandle(StatEffect, GetOwningActor(), GetOwningActor());
-        SpecHandle.Data->StackCount = FMath::FloorToInt(StatChange);
-        GetOwningAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	}
-    else if (StatChange < 0)
-    {
-        GetOwningAbilitySystemComponent()->RemoveActiveGameplayEffect(EffectHandle, FMath::FloorToInt(FMath::Abs(StatChange)));
-    }
 }

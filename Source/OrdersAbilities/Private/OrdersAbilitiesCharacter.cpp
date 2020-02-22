@@ -15,7 +15,7 @@ AOrdersAbilitiesCharacter::AOrdersAbilitiesCharacter()
 	AbilitySystem = CreateDefaultSubobject<URTSAbilitySystemComponent>(TEXT("RTSAbilitySystem"));
 
 	// Minimal Mode means that no GameplayEffects will replicate. They will only live on the Server. Attributes, GameplayTags, and GameplayCues will still replicate to us.
-	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	OrderComponent = CreateDefaultSubobject<URTSOrderComponent>(TEXT("RTSOrderComponent"));
 	//AutoOrderComponent = CreateDefaultSubobject<URTSAutoOrderComponent>(TEXT("RTSAutoOrderComponent"));

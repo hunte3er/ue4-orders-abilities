@@ -2,6 +2,7 @@
 #include "RTSSelectableComponent.h"
 
 #include "OrdersAbilities/OrdersAbilities.h"
+#include "RTSPlayerController.h"
 
 #include "WorldCollision.h"
 #include "Components/CapsuleComponent.h"
@@ -9,6 +10,8 @@
 #include "GameFramework/Actor.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/MeshComponent.h"
+#include "Orders/RTSOrderHelper.h"
+#include "AbilitySystem/RTSAbilitySystemHelper.h"
 
 
 void URTSSelectableComponent::BeginPlay()
@@ -67,7 +70,7 @@ void URTSSelectableComponent::BeginPlay()
 	}
 }
 
-void URTSSelectableComponent::SelectActor()
+void URTSSelectableComponent::SelectActor(ARTSPlayerController* SelectedBy)
 {
 	if (bSelected)
 	{
@@ -75,6 +78,25 @@ void URTSSelectableComponent::SelectActor()
 	}
 
 	bSelected = true;
+
+ //    AActor* OwnerActor = GetOwner();
+ //    ARTSPlayerState* OwnerPlayerState = nullptr;
+	// if (auto Pawn = Cast<APawn>(OwnerActor))
+	// {
+ //        OwnerPlayerState = Cast<ARTSPlayerState>(Pawn->GetPlayerState());
+	// }
+
+    // FGameplayTagContainer RelationshipTags;
+    // URTSAbilitySystemHelper::GetRelationshipTagsFromPlayers(SelectedBy->GetPlayerState(), OwnerPlayerState, RelationshipTags);
+	
+    if (SelectedBy->DoesControllerOwnActor(GetOwner()))
+    {
+        SelectionCircleMaterialInstance->SetVectorParameterValue("Color", FriendlyColor);
+    }
+    else
+    {
+        SelectionCircleMaterialInstance->SetVectorParameterValue("Color", NeutralColor);
+    }
 
     // Update selection circle.
     if (IsValid(DecalComponent))

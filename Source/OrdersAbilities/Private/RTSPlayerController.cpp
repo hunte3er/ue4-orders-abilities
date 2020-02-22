@@ -38,18 +38,32 @@ ARTSPlayerController::ARTSPlayerController()
 	bHasPendingOrder = false;
 }
 
+bool ARTSPlayerController::IsPendingOrder(TSoftClassPtr<URTSOrder> InOrderType, int32 InIndex) const
+{
+	if (!bHasPendingOrder)
+		return false;
+
+	return PendingOrder.OrderType == InOrderType && PendingOrder.Index == InIndex;
+}
+
 void ARTSPlayerController::SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType, int32 InIndex)
 {
 	if (SelectedActors.Num() == 0)
 	{
 		return;
 	}
+	
+	AActor* ActorWhoCanObeyOrder = nullptr;
 
-	AActor** ActorWhoCanObeyOrder = SelectedActors.FindByPredicate([InOrderType, InIndex](AActor* Actor)
-	{
-		return URTSOrderHelper::CanObeyOrder(InOrderType, Actor, InIndex);
-	});
-
+	for (AActor* Actor : SelectedActors)
+	{ 
+		if (URTSOrderHelper::CanObeyOrder(InOrderType, Actor, InIndex) && DoesControllerOwnActor(Actor))
+		{
+			ActorWhoCanObeyOrder = Actor;
+			break;
+		}
+	}
+	
 	if (ActorWhoCanObeyOrder == nullptr)
 	{
 		return;
@@ -59,12 +73,17 @@ void ARTSPlayerController::SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType,
 
 	// If the order no target type, just activate the ability
 	auto Order = URTSOrderHelper::GetDefaultOrder(InOrderType);
-	if (Order->IsTargetTypeFlagChecked(*ActorWhoCanObeyOrder, InIndex, ERTSTargetTypeFlags::NONE))
+	if (Order->IsTargetTypeFlagChecked(ActorWhoCanObeyOrder, InIndex, ERTSTargetTypeFlags::NONE))
 	{
 		auto OrderData = FRTSOrderData(InOrderType, InIndex);
 		
 		for (auto SelectedActor : SelectedActors)
 		{
+			if (!DoesControllerOwnActor(SelectedActor))
+			{
+				continue;
+			}
+			
 			if (auto SelectedPawn = Cast<APawn>(SelectedActor))
 			{
 				if (URTSOrderHelper::CheckOrder(SelectedPawn, OrderData).IsEmpty())
@@ -87,7 +106,6 @@ void ARTSPlayerController::SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType,
 	PendingOrderPreviewData = URTSOrderHelper::GetOrderPreviewData(InOrderType, SelectedActors[0], InIndex);
 	if (PendingOrderPreviewData.GetOrderPreviewClass() != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Spawned preview data"));
 		if (IsValid(PendingOrderPreviewActor))
 		{
 			PendingOrderPreviewActor->Destroy();
@@ -146,6 +164,11 @@ bool ARTSPlayerController::IssuePendingOrder(TArray<FHitResult>& HitResults)
 				{
 					continue;
 				}
+
+				if (!DoesControllerOwnActor(SelectedPawn))
+				{
+					continue;
+				}
 				
 				if (URTSOrderHelper::CheckOrder(SelectedPawn, OrderWithTarget).IsEmpty())
 				{
@@ -176,12 +199,25 @@ bool ARTSPlayerController::IssuePendingOrder(TArray<FHitResult>& HitResults)
 
 bool ARTSPlayerController::DoesControllerOwnActor(AActor* Actor)
 {
-	// Verify owner to prevent cheating.
-	URTSOwnerComponent* OwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
-	if (OwnerComponent)
-		return GetPlayerState() == OwnerComponent->GetPlayerOwner();
+	// // Verify owner to prevent cheating.
+	// URTSOwnerComponent* OwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
+	// if (OwnerComponent)
+	// 	return GetPlayerState() == OwnerComponent->GetPlayerOwner();
 
-	return false;
+	// Check if same owner is the same player
+	URTSOwnerComponent* OwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
+	if (!OwnerComponent)
+	{
+		return false;
+	}
+
+	ARTSPlayerState* ActorOwner = OwnerComponent->GetPlayerOwner();
+	if (!OwnerComponent->GetPlayerOwner())
+	{
+		return false;
+	}
+
+	return ActorOwner->PlayerId == GetPlayerState()->PlayerId;
 }
 
 void ARTSPlayerController::BeginPlay()
@@ -434,20 +470,22 @@ bool ARTSPlayerController::IsSelectableActor(AActor* Actor)
 		return false;
 	}
 
-	// Check if same owner is the same player
-	URTSOwnerComponent* OwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
-	if (!OwnerComponent)
-	{
-		return false;
-	}
-
-	ARTSPlayerState* ActorOwner = OwnerComponent->GetPlayerOwner();
-	if (!OwnerComponent->GetPlayerOwner())
-	{
-		return false;
-	}
+	return true;
 	
-	return ActorOwner->PlayerId == GetPlayerState()->PlayerId;
+	// // Check if same owner is the same player
+	// URTSOwnerComponent* OwnerComponent = Actor->FindComponentByClass<URTSOwnerComponent>();
+	// if (!OwnerComponent)
+	// {
+	// 	return false;
+	// }
+	//
+	// ARTSPlayerState* ActorOwner = OwnerComponent->GetPlayerOwner();
+	// if (!OwnerComponent->GetPlayerOwner())
+	// {
+	// 	return false;
+	// }
+	//
+	// return ActorOwner->PlayerId == GetPlayerState()->PlayerId;
 }
 
 void ARTSPlayerController::IssueOrder()
@@ -478,8 +516,6 @@ void ARTSPlayerController::IssueOrderTargetingObjects(TArray<FHitResult>& HitRes
 	{
 		if (HitResult.Actor != nullptr)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Checking actor %s"), *HitResult.Actor.Get()->GetName());
-			
 			// Issue attack order.
 			if (IssueAttackOrder(HitResult.Actor.Get(), HitResult.Location))
 			{
@@ -621,8 +657,7 @@ bool ARTSPlayerController::IssueMoveOrder(AActor* TargetActor, const FVector& Ta
     for (int i = 0; i < SelectedActors.Num(); ++i)
     {
 		AActor* SelectedActor = SelectedActors[i];
-		FVector IndividualTargetLocation = FVector(TargetLocations[i], 0.0f);
-		//OrderWithLocation.Location = FVector2D(IndividualTargetLocation[i]);
+		OrderWithLocation.Location = TargetLocations[i];
     	
         // Verify pawn and owner.
         auto SelectedPawn = Cast<APawn>(SelectedActor);
@@ -659,7 +694,7 @@ bool ARTSPlayerController::IssueMoveOrder(AActor* TargetActor, const FVector& Ta
             UE_LOG(LogRTS, Log, TEXT("Ordered actor %s to move to %s."), *SelectedActor->GetName(), *TargetLocation.ToString());
 
             // Notify listeners.
-            NotifyOnIssuedMoveOrder(SelectedPawn, IndividualTargetLocation);
+            NotifyOnIssuedMoveOrder(SelectedPawn, FVector(OrderToUse->Location, 0.0f));
         }
 
 		bSuccess = true;
@@ -798,7 +833,7 @@ void ARTSPlayerController::SelectActors(TArray<AActor*> Actors)
 
 		if (SelectableComponent)
 		{
-			SelectableComponent->SelectActor();
+			SelectableComponent->SelectActor(this);
 
             // Play selection sound.
             if (SelectionSoundCooldownRemaining <= 0.0f && IsValid(SelectableComponent->SelectedSound))

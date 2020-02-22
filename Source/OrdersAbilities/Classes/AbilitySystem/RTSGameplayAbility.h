@@ -190,6 +190,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Ability|Cooldown")
     virtual bool HasCooldown();
 
+    UFUNCTION(BlueprintCallable, Category = "Ability")
+    float GetAbilityBaseCooldown(int32 Level) const;
+	
     UFUNCTION(BlueprintNativeEvent, Category = "Ability")
     float GetAbilityCooldown(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const;
 
@@ -211,10 +214,11 @@ public:
     bool CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const;
 
     void ApplyCostMagnitude(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const;
-	
-protected:
+
     UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     FGameplayTagContainer CooldownTags;
+	
+protected:
 
     /** The base cooldown of the ability */
     UPROPERTY(Category = Ability, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
@@ -298,4 +302,10 @@ protected:
     /** Whether this ability uses a specific target score. */
     UPROPERTY(Category = "RTS Auto Abilities", EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsTargetScoreOverridden;
+
+private:
+    // Temp container that we will return the pointer to in GetCooldownTags().
+	// This will be a union of our CooldownTags and the Cooldown GE's cooldown tags.
+    UPROPERTY()
+    FGameplayTagContainer TempCooldownTags;
 };

@@ -221,16 +221,21 @@ void URTSGameplayAbility::FPGAApplyCooldown(const FGameplayAbilitySpecHandle Han
 	UGameplayEffect* CooldownGE = GetCooldownGameplayEffect();
 	if (CooldownGE)
 	{
-		CooldownGE->InheritableOwnedTagsContainer.CombinedTags = CooldownTags;// .AddTag(AbilityTag);
+		// CooldownGE->InheritableOwnedTagsContainer.CombinedTags = CooldownTags;// .AddTag(AbilityTag);
+
+		auto AbilitySystem = ActorInfo->AbilitySystemComponent;
 		
-		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystem->MakeOutgoingSpec(CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
+		// FGameplayEffectSpecHandle SpecHandle = AbilitySystem->MakeOutgoingSpec(CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo), FGameplayEffectContextHandle()); //MakeEffectContext(Handle, ActorInfo));
+		// FGameplayAbilitySpecHandle* NewDummyHandle = new FGameplayAbilitySpecHandle();
+		// FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(*NewDummyHandle, ActorInfo, ActivationInfo, CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
 		if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
 		{
-			FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
+			SpecHandle.Data.Get()->DynamicGrantedTags.AppendTags(CooldownTags);
 			
 			const float CooldownMagnitude = GetAbilityCooldown(ActorInfo->AbilitySystemComponent.Get(), Handle);
-			
-			Spec.SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cooldown(), CooldownMagnitude);
+
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(URTSGlobalTags::SetByCaller_Cooldown(), CooldownMagnitude);
 
 			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 		}
@@ -240,6 +245,20 @@ void URTSGameplayAbility::FPGAApplyCooldown(const FGameplayAbilitySpecHandle Han
 bool URTSGameplayAbility::HasCooldown()
 {
 	return CooldownTags.Num() > 0;
+}
+
+float URTSGameplayAbility::GetAbilityBaseCooldown(int32 Level) const
+{
+	static const FString CalculateMagnitudeContext(TEXT("FAttributeBasedFloat::CalculateMagnitude"));
+
+	float CooldownMagnitude = AbilityCooldown;
+	
+	if (AbilityCooldownCurve.IsValid(CalculateMagnitudeContext))
+	{
+		AbilityCooldownCurve.Eval(Level, &CooldownMagnitude, CalculateMagnitudeContext);
+	}
+
+	return CooldownMagnitude;
 }
 
 void URTSGameplayAbility::CommitExecute(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
@@ -332,18 +351,11 @@ void URTSGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, con
 
 float URTSGameplayAbility::GetAbilityCooldown_Implementation(UAbilitySystemComponent* AbilitySystem, const FGameplayAbilitySpecHandle& Handle) const
 {
-	float CooldownMagnitude = AbilityCooldown;
+	FGameplayAbilitySpec* Spec = AbilitySystem->FindAbilitySpecFromHandle(Handle);
 
-	// if a curve table entry is specified, use the attribute value as a lookup into the curve instead of using it directly
-	static const FString CalculateMagnitudeContext(TEXT("FAttributeBasedFloat::CalculateMagnitude"));
+	int32 AbilityLevel = Spec ? Spec->Level : 0;
 	
-	if (FGameplayAbilitySpec* Spec = AbilitySystem->FindAbilitySpecFromHandle(Handle))
-	{
-		if (AbilityCooldownCurve.IsValid(CalculateMagnitudeContext))
-		{
-			AbilityCooldownCurve.Eval(Spec->Level, &CooldownMagnitude, CalculateMagnitudeContext);
-		}
-	}
+	float CooldownMagnitude = GetAbilityBaseCooldown(AbilityLevel);
 	
 	if (AbilitySystem)
 	{
@@ -378,7 +390,14 @@ float URTSGameplayAbility::GetAbilityCost_Implementation(UAbilitySystemComponent
 
 const FGameplayTagContainer* URTSGameplayAbility::GetCooldownTags() const
 {
-	return &CooldownTags;
+	FGameplayTagContainer* MutableTags = const_cast<FGameplayTagContainer*>(&TempCooldownTags);
+	const FGameplayTagContainer* ParentTags = Super::GetCooldownTags();
+	if (ParentTags)
+	{
+		MutableTags->AppendTags(*ParentTags);
+	}
+	MutableTags->AppendTags(CooldownTags);
+	return MutableTags;
 }
 
 bool URTSGameplayAbility::CanApplySpecAttributeModifiers(UAbilitySystemComponent* AbilitySystem, const FGameplayEffectSpec& Spec, const FGameplayAbilitySpecHandle& Handle) const

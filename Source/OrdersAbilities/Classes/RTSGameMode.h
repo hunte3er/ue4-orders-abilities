@@ -50,6 +50,7 @@ public:
 	virtual void RestartPlayerAtPlayerStart(AController* NewPlayer, AActor* StartSpot) override;
 
 	/** Spawns an actor of the specified type and transfers ownership to the specified player. */
+	UFUNCTION(BlueprintCallable)
 	virtual AActor* SpawnActorForPlayer(TSubclassOf<AActor> ActorClass, AController* ActorOwner, const FTransform& SpawnTransform);
 
     /** Sets the specified player as the owner of the passed actor. */

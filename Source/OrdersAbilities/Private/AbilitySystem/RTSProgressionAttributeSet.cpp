@@ -22,7 +22,7 @@ void URTSProgressionAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME_CONDITION_NOTIFY(URTSProgressionAttributeSet, CurrentExp, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSProgressionAttributeSet, ExpReward, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(URTSProgressionAttributeSet, SkillPoints, COND_None, REPNOTIFY_Always);
-    DOREPLIFETIME_CONDITION_NOTIFY(URTSProgressionAttributeSet, Temporary2, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(URTSProgressionAttributeSet, StatPoints, COND_None, REPNOTIFY_Always);
 }
 
 URTSProgressionAttributeSet::URTSProgressionAttributeSet()
@@ -31,22 +31,12 @@ URTSProgressionAttributeSet::URTSProgressionAttributeSet()
     CurrentExp = 0.0f;
 	ExpReward = 10.0f;
 	SkillPoints = 1.0f;
-	Temporary2 = 1.0f;
-}
-
-bool URTSProgressionAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const
-{
-    // We do not want the health property to change when the attribute sets properties where initialized using a curve
-    // table.
-    return (PropertyToInit != GetTemporary2Attribute().GetUProperty());
-}
-
-void URTSProgressionAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
-{
+	StatPoints = 0.0f;
 }
 
 void URTSProgressionAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
+    // Level up every 100 exp
     if (Data.EvaluatedData.Attribute == GetCurrentExpAttribute())
     {
         while (GetCurrentExp() >= 100)
@@ -58,13 +48,5 @@ void URTSProgressionAttributeSet::PostGameplayEffectExecute(const FGameplayEffec
             URTSAbilitySystemHelper::GetSourceAndTargetTags(GetOwningActor(), GetOwningActor(), LevelUpEventData.InstigatorTags, LevelUpEventData.TargetTags);
             UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(), URTSGlobalTags::Event_OnLevelUp(), LevelUpEventData);
         }
-    }
-}
-
-void URTSProgressionAttributeSet::PostInitializeProperties(bool bInitialInit)
-{
-    if (bInitialInit)
-    {
-        Temporary2 = 1.0f;
     }
 }

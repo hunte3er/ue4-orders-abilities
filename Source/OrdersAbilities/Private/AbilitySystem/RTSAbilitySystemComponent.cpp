@@ -20,6 +20,7 @@
 #include "RTSOwnerComponent.h"
 #include "RTSUtilities.h"
 #include "RTSPlayerState.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 URTSAbilitySystemComponent::URTSAbilitySystemComponent()
 {
@@ -448,6 +449,8 @@ void URTSAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec
     }
 
     URTSGameplayAbility* RTSGameplayAbility = Cast<URTSGameplayAbility>(AbilitySpec.Ability);
+    if (!RTSGameplayAbility)
+        return;
 
     const TArray<FAbilityTriggerData>& AbilityTriggerData = RTSGameplayAbility->GetAbilityTriggerData();
 
@@ -457,7 +460,6 @@ void URTSAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec
 
         if (TriggerData.TriggerSource != EGameplayAbilityTriggerSource::GameplayEvent)
         {
-
             if (GetTagCount(TriggerData.TriggerTag))
             {
                 UAbilitySystemComponent::TryActivateAbility(AbilitySpec.Handle, false);

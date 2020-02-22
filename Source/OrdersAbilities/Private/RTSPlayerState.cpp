@@ -13,7 +13,7 @@ ARTSPlayerState::ARTSPlayerState(const FObjectInitializer& ObjectInitializer)
 	NetUpdateFrequency = 100.0f;
 	
 	AbilitySystem = CreateDefaultSubobject<URTSAbilitySystemComponent>(TEXT("RTSAbilitySystem"));
-	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 }
 
 void ARTSPlayerState::BeginPlay()

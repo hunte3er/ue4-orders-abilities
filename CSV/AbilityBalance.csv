@@ -1,3 +1,3 @@
 ---,1,2,3,4,5
 Ability.TestAOE.Damage,5,10,20,40,50
-Ability.TestBuff.Cooldown,50,55,60,65,70
+Ability.TestBuff.Cooldown,5,4,3,2,1

@@ -90,6 +90,11 @@ URTSAbilitySystemHelper::GetBasicAttackAbilities(const UAbilitySystemComponent* 
             continue;
         }
 
+        if (!Ability->IsChildOf(URTSGameplayAbility::StaticClass()))
+        {
+            continue;
+        }
+
         URTSGameplayAbility* GameplayAbility = Ability->GetDefaultObject<URTSGameplayAbility>();
 
         if (!IsValid(GameplayAbility))
@@ -119,6 +124,11 @@ TArray<TSubclassOf<UGameplayAbility>> URTSAbilitySystemHelper::GetOrderAbilities
 			continue;
 		}
 
+        if (!Ability->IsChildOf(URTSGameplayAbility::StaticClass()))
+        {
+            continue;
+        }
+		
 		URTSGameplayAbility* GameplayAbility = Ability->GetDefaultObject<URTSGameplayAbility>();
 
 		if (!IsValid(GameplayAbility))
@@ -211,18 +221,31 @@ void URTSAbilitySystemHelper::GetCooldownTimeRemainingAndDuration(const UAbility
                                                                   float& OutRemainingCooldownTime,
                                                                   float& OutCooldownDuration)
 {
-    TSubclassOf<UGameplayEffect> CooldownEffectClass = GetCooldownEffect(Ability);
+    const FGameplayTagContainer* CooldownTags = nullptr;
 
-    GetActiveEffectTimeRemainingAndDuration(AbilitySystem, CooldownEffectClass, OutRemainingCooldownTime,
-                                            OutCooldownDuration);
-
-    if (CooldownEffectClass && OutCooldownDuration == 0)
+    if (Ability->IsChildOf(URTSGameplayAbility::StaticClass()))
     {
-        // If we didn't find any cooldown duration, it might be due to the fact that no cooldown effect is active. Try
-        // using the CDO.
-        const UGameplayEffect* CooldownEffect = CooldownEffectClass->GetDefaultObject<UGameplayEffect>();
-        FGameplayEffectSpec CooldownEffectSpec(CooldownEffect, FGameplayEffectContextHandle());
-        CooldownEffect->DurationMagnitude.AttemptCalculateMagnitude(CooldownEffectSpec, OutCooldownDuration);
+        if (URTSGameplayAbility* RTSAbility = Cast<URTSGameplayAbility>(Ability->GetDefaultObject<UGameplayAbility>()))
+        {
+            CooldownTags = &RTSAbility->CooldownTags;
+        }
+    }
+
+	if (CooldownTags == nullptr)
+	{
+        OutRemainingCooldownTime = 0.0f;
+        OutCooldownDuration = 0.0f;
+        return;
+	}
+
+    FGameplayEffectQuery Query;
+    Query.OwningTagQuery = FGameplayTagQuery::MakeQuery_MatchAllTags(*CooldownTags);
+    TArray<TPair<float, float>> RemainingTimes = AbilitySystem->GetActiveEffectsTimeRemainingAndDuration(Query);
+
+    if (RemainingTimes.Num() > 0)
+    {
+        OutRemainingCooldownTime = RemainingTimes[0].Key;
+        OutCooldownDuration = RemainingTimes[0].Value;
     }
 }
 
@@ -454,6 +477,25 @@ bool URTSAbilitySystemHelper::IsHumanPlayerAutoAbility(TSubclassOf<UGameplayAbil
     }
 
     return AbilityCDO->IsHumanPlayerAutoAbility();
+}
+
+void URTSAbilitySystemHelper::GetAbilityCooldownTags(TSubclassOf<UGameplayAbility> Ability, FGameplayTagContainer& OutCooldownTags)
+{
+    if (Ability == nullptr)
+    {
+        return;
+    }
+
+    URTSGameplayAbility* AbilityCDO = Cast<URTSGameplayAbility>(Ability->GetDefaultObject<UGameplayAbility>());
+    if (AbilityCDO == nullptr)
+    {
+        return;
+    }
+
+    if (const FGameplayTagContainer* CooldownTags = AbilityCDO->GetCooldownTags())
+    {
+        OutCooldownTags = *CooldownTags;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -719,7 +761,7 @@ void URTSAbilitySystemHelper::GetPlayerOwnerTags(const AActor* Actor, FGameplayT
     OutGameplayTags = OutGameplayTags.EmptyContainer;
 
     // NOTE(np): In A Year Of Rain, players themselves store player-specific tags in an ability system component.
-    /*if (!IsValid(Actor))
+    if (!IsValid(Actor))
     {
         return;
     }
@@ -737,8 +779,12 @@ void URTSAbilitySystemHelper::GetPlayerOwnerTags(const AActor* Actor, FGameplayT
     }
 
     const UAbilitySystemComponent* AbilitySystem = PlayerState->FindComponentByClass<UAbilitySystemComponent>();
-
-    AbilitySystem->GetOwnedGameplayTags(OutGameplayTags);*/
+    if (AbilitySystem == nullptr)
+    {
+        return;
+    }
+    	
+    AbilitySystem->GetOwnedGameplayTags(OutGameplayTags);
 }
 
 FGameplayTagContainer URTSAbilitySystemHelper::GetRelationshipTags(const AActor* Actor, const AActor* Other)

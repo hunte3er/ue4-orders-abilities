@@ -193,11 +193,15 @@ public:
 	AActor* PendingOrderPreviewActor;
 
 	UFUNCTION(BlueprintCallable)
+	bool IsPendingOrder(TSoftClassPtr<URTSOrder> InOrderType, int32 InIndex) const;
+
+	UFUNCTION(BlueprintCallable)
 	void SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType, int32 InIndex);
 
 	UFUNCTION(BlueprintCallable)
 	void RemovePendingOrder();
 
+	UFUNCTION(BlueprintCallable)
 	bool DoesControllerOwnActor(AActor* Actor);
 	
 protected:
