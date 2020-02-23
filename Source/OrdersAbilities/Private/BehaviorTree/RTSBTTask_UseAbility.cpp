@@ -12,7 +12,7 @@
 EBTNodeResult::Type URTSBTTask_UseAbility::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	MyOwnerComp = &OwnerComp;
-	
+
 	APawn* Pawn = OwnerComp.GetAIOwner()->GetPawn();
 	if (!Pawn)
 		return EBTNodeResult::Failed;
@@ -41,12 +41,14 @@ EBTNodeResult::Type URTSBTTask_UseAbility::ExecuteTask(UBehaviorTreeComponent& O
 	FGameplayEventData EventData;
 	URTSAbilitySystemHelper::CreateGameplayEventData(Pawn, TargetData, MyAbility->GetClass(), EventData);
 
+	MyAbilitySystem->OnGameplayAbilityEnded.AddDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
+	
 	if (MyAbilitySystem->TryActivateAbilityByClass(AbilityClass))
 	{
-		MyAbilitySystem->OnGameplayAbilityEnded.RemoveDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
-		MyAbilitySystem->OnGameplayAbilityEnded.AddDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
 		return EBTNodeResult::InProgress;
 	}
+	
+	MyAbilitySystem->OnGameplayAbilityEnded.RemoveDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
 	
 	// int32 TriggeredAbilities = URTSAbilitySystemHelper::SendGameplayEvent(Pawn, EventData);
 	// if (TriggeredAbilities > 0)
