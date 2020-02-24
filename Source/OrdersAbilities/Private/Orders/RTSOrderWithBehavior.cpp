@@ -7,7 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 
-#include "Orders/OrdersAbilitiesAIController.h"
+#include "RTSAIController.h"
 #include "Orders/RTSOrder.h"
 #include "Orders/RTSOrderData.h"
 #include "Orders/RTSOrderResult.h"
@@ -49,13 +49,13 @@ void URTSOrderWithBehavior::IssueOrder(AActor* OrderedActor, const FRTSOrderTarg
         return;
     }
 
-    AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Pawn->GetController());
+    ARTSAIController* Controller = Cast<ARTSAIController>(Pawn->GetController());
     if (Controller == nullptr)
     {
         UE_LOG(
             LogRTS, Error,
             TEXT(
-                "The specified pawn '%s' does not have the required 'OrdersAbilitiesAIController' to receive RTS orders."),
+                "The specified pawn '%s' does not have the required 'RTSAIController' to receive RTS orders."),
             *OrderedActor->GetName());
         Callback.Broadcast(ERTSOrderResult::FAILED);
         return;

@@ -9,14 +9,14 @@
 #include "GameplayEffect.h"
 #include "AttributeSet.h"
 #include "GenericTeamAgentInterface.h"
-#include "OrdersAbilitiesCharacter.generated.h"
+#include "RTSCharacter.generated.h"
 
 class URTSAbilitySystemComponent;
 class URTSOrderComponent;
 class URTSAutoOrderComponent;
 
 UCLASS()
-class ORDERSABILITIES_API AOrdersAbilitiesCharacter
+class ORDERSABILITIES_API ARTSCharacter
 	: public ACharacter
 	, public IAbilitySystemInterface
 {
@@ -31,11 +31,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Orders, meta = (AllowPrivateAccess = "true"))
 	URTSOrderComponent* OrderComponent;
 
-	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Orders, meta = (AllowPrivateAccess = "true"))
-	// URTSAutoOrderComponent* AutoOrderComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Orders, meta = (AllowPrivateAccess = "true"))
+	URTSAutoOrderComponent* AutoOrderComponent;
 	
 	// Sets default values for this character's properties
-	AOrdersAbilitiesCharacter();
+	ARTSCharacter();
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "OrdersAbilitiesCharacter.h"
+#include "RTSCharacter.h"
 #include "AbilitySystem/RTSAbilitySystemComponent.h"
 #include "Orders/RTSOrderComponent.h"
 #include "Orders/RTSAutoOrderComponent.h"
 #include "GameFramework/Controller.h"
 
 // Sets default values
-AOrdersAbilitiesCharacter::AOrdersAbilitiesCharacter()
+ARTSCharacter::ARTSCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -22,7 +22,7 @@ AOrdersAbilitiesCharacter::AOrdersAbilitiesCharacter()
 }
 
 // Called when the game starts or when spawned
-void AOrdersAbilitiesCharacter::BeginPlay()
+void ARTSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -31,25 +31,25 @@ void AOrdersAbilitiesCharacter::BeginPlay()
 }
 
 // Called every frame
-void AOrdersAbilitiesCharacter::Tick(float DeltaTime)
+void ARTSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
 // Called to bind functionality to input
-void AOrdersAbilitiesCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ARTSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 
-UAbilitySystemComponent* AOrdersAbilitiesCharacter::GetAbilitySystemComponent() const
+UAbilitySystemComponent* ARTSCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystem;
 }
 
-UNetConnection* AOrdersAbilitiesCharacter::GetNetConnection() const
+UNetConnection* ARTSCharacter::GetNetConnection() const
 {
 	return Super::GetNetConnection();
 }

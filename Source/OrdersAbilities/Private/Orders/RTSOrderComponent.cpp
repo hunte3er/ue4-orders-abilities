@@ -10,7 +10,7 @@
 
 #include "AbilitySystem/RTSAbilitySystemHelper.h"
 #include "AbilitySystem/RTSGlobalTags.h"
-#include "Orders/OrdersAbilitiesAIController.h"
+#include "RTSAIController.h"
 #include "Orders/RTSOrder.h"
 #include "Orders/RTSOrderErrorTags.h"
 #include "Orders/RTSOrderHelper.h"
@@ -51,11 +51,11 @@ void URTSOrderComponent::BeginPlay()
 
     // Try to set the stop order if possible.
 	
-    AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Pawn->GetController());
+    ARTSAIController* Controller = Cast<ARTSAIController>(Pawn->GetController());
     if (Controller == nullptr)
     {
 		Pawn->SpawnDefaultController();
-		Controller = Cast<AOrdersAbilitiesAIController>(Pawn->GetController());
+		Controller = Cast<ARTSAIController>(Pawn->GetController());
     }
 
 	if (Controller == nullptr)
@@ -295,7 +295,7 @@ void URTSOrderComponent::InsertOrderBeforeCurrentOrder(const FRTSOrderData& Orde
     OrderQueue.Insert(CurrentOrder, 0);
 
     // Save home location of the current order.
-    AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Cast<APawn>(GetOwner())->GetController());
+    ARTSAIController* Controller = Cast<ARTSAIController>(Cast<APawn>(GetOwner())->GetController());
     if (Controller != nullptr)
     {
         LastOrderHomeLocation = Controller->GetHomeLocation();
@@ -355,14 +355,14 @@ void URTSOrderComponent::ObeyOrder(const FRTSOrderData& Order)
         HomeLocation = LastOrderHomeLocation;
         bIsHomeLocationSet = false;
     }
-	// else if (Order.OrderType == StopOrder) // fpwong: need this so that units which are stopped won't chase forever
-	// {
-	// 	AOrdersAbilitiesAIController* Controller = Cast<AOrdersAbilitiesAIController>(Cast<APawn>(GetOwner())->GetController());
-	// 	if (Controller != nullptr)
-	// 	{
-	// 		HomeLocation = Controller->GetHomeLocation();
-	// 	}
-	// }
+	else if (Order.OrderType == StopOrder) // fpwong: need this so that units which are stopped won't chase forever
+	{
+        ARTSAIController* Controller = Cast<ARTSAIController>(Cast<APawn>(GetOwner())->GetController());
+		if (Controller != nullptr)
+		{
+			HomeLocation = Controller->GetHomeLocation();
+		}
+	}
     else
     {
         HomeLocation = Owner->GetActorLocation();

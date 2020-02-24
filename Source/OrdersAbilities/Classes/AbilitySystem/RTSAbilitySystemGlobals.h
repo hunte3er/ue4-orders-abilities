@@ -1,16 +1,14 @@
-// Copyright 2020 Dan Kestranek.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AbilitySystemGlobals.h"
-#include "OrdersAbilitiesAbilitySystemGlobals.generated.h"
+#include "RTSAbilitySystemGlobals.generated.h"
 
 /**
  *
  */
 UCLASS()
-class ORDERSABILITIES_API UOrdersAbilitiesAbilitySystemGlobals : public UAbilitySystemGlobals
+class ORDERSABILITIES_API URTSAbilitySystemGlobals : public UAbilitySystemGlobals
 {
 public:
 	FGameplayAbilityActorInfo* AllocAbilityActorInfo() const override;

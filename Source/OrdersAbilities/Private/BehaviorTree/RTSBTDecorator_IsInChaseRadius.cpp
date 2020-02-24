@@ -6,7 +6,7 @@
 #include "Orders/RTSOrderHelper.h"
 #include "Orders/RTSBlackboardHelper.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Orders/OrdersAbilitiesAIController.h"
+#include "RTSAIController.h"
 
 URTSBTDecorator_IsInChaseRadius::URTSBTDecorator_IsInChaseRadius(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

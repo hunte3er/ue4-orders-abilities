@@ -1,4 +1,4 @@
-#include "Orders/OrdersAbilitiesAIController.h"
+#include "RTSAIController.h"
 
 #include "OrdersAbilities/OrdersAbilities.h"
 
@@ -14,7 +14,7 @@
 #include "Navigation/CrowdFollowingComponent.h"
 
 
-AOrdersAbilitiesAIController::AOrdersAbilitiesAIController(const FObjectInitializer& ObjectInitializer)
+ARTSAIController::ARTSAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -35,7 +35,7 @@ AOrdersAbilitiesAIController::AOrdersAbilitiesAIController(const FObjectInitiali
 	}
 }
 
-void AOrdersAbilitiesAIController::OnPossess(APawn* InPawn)
+void ARTSAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
@@ -57,7 +57,7 @@ void AOrdersAbilitiesAIController::OnPossess(APawn* InPawn)
     RunBehaviorTree(BehaviorTree);
 }
 
-TSubclassOf<AActor> AOrdersAbilitiesAIController::GetBuildingClass() const
+TSubclassOf<AActor> ARTSAIController::GetBuildingClass() const
 {
     if (!VerifyBlackboard())
     {
@@ -81,7 +81,7 @@ TSubclassOf<AActor> AOrdersAbilitiesAIController::GetBuildingClass() const
     return nullptr;
 }
 
-bool AOrdersAbilitiesAIController::HasOrder(TSubclassOf<URTSOrder> OrderType) const
+bool ARTSAIController::HasOrder(TSubclassOf<URTSOrder> OrderType) const
 {
     if (!VerifyBlackboard())
     {
@@ -91,7 +91,7 @@ bool AOrdersAbilitiesAIController::HasOrder(TSubclassOf<URTSOrder> OrderType) co
     return Blackboard->GetValueAsClass(URTSBlackboardHelper::BLACKBOARD_KEY_ORDER_TYPE) == OrderType;
 }
 
-void AOrdersAbilitiesAIController::IssueOrder(const FRTSOrderData& Order, FRTSOrderCallback Callback,
+void ARTSAIController::IssueOrder(const FRTSOrderData& Order, FRTSOrderCallback Callback,
                                            const FVector& HomeLocation)
 {
     UBehaviorTree* BehaviorTree = URTSOrderHelper::GetBehaviorTree(Order.OrderType.Get());
@@ -110,12 +110,12 @@ void AOrdersAbilitiesAIController::IssueOrder(const FRTSOrderData& Order, FRTSOr
     ApplyOrder(Order, BehaviorTree);
 }
 
-TSoftClassPtr<URTSStopOrder> AOrdersAbilitiesAIController::GetStopOrder() const
+TSoftClassPtr<URTSStopOrder> ARTSAIController::GetStopOrder() const
 {
     return StopOrder;
 }
 
-void AOrdersAbilitiesAIController::BehaviorTreeEnded(EBTNodeResult::Type Result)
+void ARTSAIController::BehaviorTreeEnded(EBTNodeResult::Type Result)
 {
     if (!VerifyBlackboard())
     {
@@ -137,7 +137,7 @@ void AOrdersAbilitiesAIController::BehaviorTreeEnded(EBTNodeResult::Type Result)
     }
 }
 
-FVector AOrdersAbilitiesAIController::GetHomeLocation()
+FVector ARTSAIController::GetHomeLocation()
 {
     if (!VerifyBlackboard())
     {
@@ -147,7 +147,7 @@ FVector AOrdersAbilitiesAIController::GetHomeLocation()
     return Blackboard->GetValueAsVector(URTSBlackboardHelper::BLACKBOARD_KEY_HOME_LOCATION);
 }
 
-void AOrdersAbilitiesAIController::SetBlackboardValues(const FRTSOrderData& Order, const FVector& HomeLocation)
+void ARTSAIController::SetBlackboardValues(const FRTSOrderData& Order, const FVector& HomeLocation)
 {
     if (!VerifyBlackboard())
     {
@@ -175,7 +175,7 @@ void AOrdersAbilitiesAIController::SetBlackboardValues(const FRTSOrderData& Orde
     Blackboard->SetValueAsVector(URTSBlackboardHelper::BLACKBOARD_KEY_HOME_LOCATION, HomeLocation);
 }
 
-void AOrdersAbilitiesAIController::ApplyOrder(const FRTSOrderData& Order, UBehaviorTree* BehaviorTree)
+void ARTSAIController::ApplyOrder(const FRTSOrderData& Order, UBehaviorTree* BehaviorTree)
 {
     UBehaviorTreeComponent* BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
     if (BehaviorTreeComponent != nullptr && BehaviorTree != nullptr)
@@ -197,7 +197,7 @@ void AOrdersAbilitiesAIController::ApplyOrder(const FRTSOrderData& Order, UBehav
     }
 }
 
-bool AOrdersAbilitiesAIController::VerifyBlackboard() const
+bool ARTSAIController::VerifyBlackboard() const
 {
     if (!Blackboard)
     {
@@ -211,7 +211,7 @@ bool AOrdersAbilitiesAIController::VerifyBlackboard() const
     return true;
 }
 
-void AOrdersAbilitiesAIController::Tick(float DeltaTime)
+void ARTSAIController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
