@@ -159,7 +159,7 @@ public:
     UFUNCTION(Category = "RTS Ability|Abilities", BlueprintPure)
     static void GetAbilityCooldownTags(TSubclassOf<UGameplayAbility> Ability,
             FGameplayTagContainer& OutCooldownTags);
-	
+
     // ---------------------------------------------------------------------------------------------------
     // Effects
     // ---------------------------------------------------------------------------------------------------

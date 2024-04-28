@@ -15,6 +15,7 @@
 #include "RTSTeamInfo.h"
 #include "RTSPlayerStart.h"
 
+
 ARTSGameMode::ARTSGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -135,13 +136,9 @@ void ARTSGameMode::RestartPlayerAtPlayerStart(AController* NewPlayer, AActor* St
 	SpawnRotation.Yaw = StartSpot->GetActorRotation().Yaw;
 
 	// Build spawn info.
-
-	TArray<TSubclassOf<AActor>> ActorsToSpawn;
-	GetInitialActorsForPlayer(NewPlayer, ActorsToSpawn);
-	
-	for (int32 i = 0; i < ActorsToSpawn.Num(); ++i)
+	for (int32 i = 0; i < InitialActors.Num(); ++i)
 	{
-        TSubclassOf<AActor> ActorClass = ActorsToSpawn[i];
+        TSubclassOf<AActor> ActorClass = InitialActors[i];
 
 		// Spawn actor.
         FVector SpawnLocation = StartSpot->GetActorLocation();
@@ -202,9 +199,4 @@ void ARTSGameMode::TransferOwnership(AActor* Actor, AController* NewOwner)
     {
         NewPlayerOwner->NotifyOnActorOwnerChanged(Actor);
     }    
-}
-
-void ARTSGameMode::GetInitialActorsForPlayer_Implementation(AController* Player, TArray<TSubclassOf<AActor>>& OutActors)
-{
-	OutActors = InitialActors;
 }

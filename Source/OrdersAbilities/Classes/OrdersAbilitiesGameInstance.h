@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "RTSGameInstance.generated.h"
+#include "OrdersAbilitiesGameInstance.generated.h"
 
 UCLASS()
-class ORDERSABILITIES_API URTSGameInstance : public UGameInstance
+class ORDERSABILITIES_API UOrdersAbilitiesGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 

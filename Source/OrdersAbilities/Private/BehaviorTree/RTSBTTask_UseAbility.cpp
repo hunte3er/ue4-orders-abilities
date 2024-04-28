@@ -42,9 +42,8 @@ EBTNodeResult::Type URTSBTTask_UseAbility::ExecuteTask(UBehaviorTreeComponent& O
 	URTSAbilitySystemHelper::CreateGameplayEventData(Pawn, TargetData, MyAbility->GetClass(), EventData);
 
 	MyAbilitySystem->OnGameplayAbilityEnded.AddDynamic(this, &URTSBTTask_UseAbility::OnAbilityEnded);
-		
-	// if (MyAbilitySystem->TryActivateAbilityByClass(AbilityClass))
-	if (MyAbilitySystem->TryActivateAbilityByClassWithEventData(AbilityClass, EventData))
+	
+	if (MyAbilitySystem->TryActivateAbilityByClass(AbilityClass))
 	{
 		return EBTNodeResult::InProgress;
 	}

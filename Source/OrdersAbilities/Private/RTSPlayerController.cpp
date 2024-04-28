@@ -20,8 +20,7 @@
 #include "RTSTeamInfo.h"
 #include "RTSUtilities.h"
 #include "Orders/RTSOrderHelper.h"
-#include "RTSAIController.h"
-#include "Orders/RTSOrderWithBehavior.h"
+#include "Orders/OrdersAbilitiesAIController.h"
 #include "GameFramework/SpringArmComponent.h"
 
 
@@ -54,35 +53,37 @@ void ARTSPlayerController::SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType,
 		return;
 	}
 	
-	TArray<AActor*> ValidActors;
+	AActor* ActorWhoCanObeyOrder = nullptr;
+
 	for (AActor* Actor : SelectedActors)
 	{ 
-		if (URTSOrderHelper::CanObeyOrder(InOrderType, Actor, InIndex))// && DoesControllerOwnActor(Actor))
+		if (URTSOrderHelper::CanObeyOrder(InOrderType, Actor, InIndex) && DoesControllerOwnActor(Actor))
 		{
-			ValidActors.Add(Actor);
+			ActorWhoCanObeyOrder = Actor;
 			break;
 		}
 	}
 	
-	if (ValidActors.Num() == 0)
+	if (ActorWhoCanObeyOrder == nullptr)
 	{
 		return;
 	}
 
 	UE_LOG(LogRTS, Log, TEXT("Set pending order %s | %d"), *InOrderType.ToString(), InIndex);
 
-	
 	// If the order no target type, just activate the ability
-	URTSOrder* Order = URTSOrderHelper::GetDefaultOrder(InOrderType);
-
-	URTSOrderWithBehavior* OrderWithBehavior = Cast<URTSOrderWithBehavior>(Order);
-	
-	if (!OrderWithBehavior || Order->IsTargetTypeFlagChecked(ValidActors[0], InIndex, ERTSTargetTypeFlags::NONE))
+	auto Order = URTSOrderHelper::GetDefaultOrder(InOrderType);
+	if (Order->IsTargetTypeFlagChecked(ActorWhoCanObeyOrder, InIndex, ERTSTargetTypeFlags::NONE))
 	{
 		auto OrderData = FRTSOrderData(InOrderType, InIndex);
 		
-		for (auto SelectedActor : ValidActors)
+		for (auto SelectedActor : SelectedActors)
 		{
+			if (!DoesControllerOwnActor(SelectedActor))
+			{
+				continue;
+			}
+			
 			if (auto SelectedPawn = Cast<APawn>(SelectedActor))
 			{
 				if (URTSOrderHelper::CheckOrder(SelectedPawn, OrderData).IsEmpty())
@@ -111,6 +112,8 @@ void ARTSPlayerController::SetPendingOrder(TSoftClassPtr<URTSOrder> InOrderType,
 		}
 		
 		PendingOrderPreviewActor = GetWorld()->SpawnActor(PendingOrderPreviewData.GetOrderPreviewClass());
+
+		
 	}
 	else
 	{
@@ -654,7 +657,7 @@ bool ARTSPlayerController::IssueMoveOrder(AActor* TargetActor, const FVector& Ta
     for (int i = 0; i < SelectedActors.Num(); ++i)
     {
 		AActor* SelectedActor = SelectedActors[i];
-		OrderWithLocation.Location = FVector2D(TargetLocation);//TargetLocations[i];
+		OrderWithLocation.Location = TargetLocations[i];
     	
         // Verify pawn and owner.
         auto SelectedPawn = Cast<APawn>(SelectedActor);
@@ -805,8 +808,7 @@ void ARTSPlayerController::ServerIssuePendingOrder_Implementation(APawn* Ordered
 
 bool ARTSPlayerController::ServerIssuePendingOrder_Validate(APawn* OrderedPawn, const FRTSOrderData& InPendingOrder, bool bEnqueueOrder)
 {
-	return true;
-	// return DoesControllerOwnActor(OrderedPawn);
+	return DoesControllerOwnActor(OrderedPawn);
 }
 
 void ARTSPlayerController::SelectActors(TArray<AActor*> Actors)

@@ -4,7 +4,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BehaviorTreeTypes.h"
 #include "Orders/RTSOrderData.h"
-#include "RTSAIController.generated.h"
+#include "OrdersAbilitiesAIController.generated.h"
 
 class URTSAttackComponent;
 class URTSOrder;
@@ -16,13 +16,13 @@ class URTSContinueConstructionOrder;
  * AI controller that drives RTS unit movement and orders.
  */
 UCLASS()
-class ORDERSABILITIES_API ARTSAIController : public AAIController
+class ORDERSABILITIES_API AOrdersAbilitiesAIController : public AAIController
 {
     GENERATED_BODY()
 
 public:
     /** Constructor that takes an ObjectInitializer. */
-    ARTSAIController(const FObjectInitializer& ObjectInitializer);
+    AOrdersAbilitiesAIController(const FObjectInitializer& ObjectInitializer);
 
     /** Gets the building class of the current order. */
     UFUNCTION(BlueprintPure)

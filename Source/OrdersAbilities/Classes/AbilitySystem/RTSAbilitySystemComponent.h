@@ -154,9 +154,6 @@ public:
     void GetAutoOrders_Implementation(TArray<FRTSOrderTypeWithIndex>& OutAutoOrders);
     //~ End IRTSAutoOrderProvider Interface
 
-    bool TryActivateAbilityByClassWithEventData(TSubclassOf<UGameplayAbility> Ability, const FGameplayEventData& EventData, bool bAllowRemoteActivation = false);
-    bool TryActivateAbilityWithEventData(FGameplayAbilitySpecHandle AbilityToActivate, const FGameplayEventData& EventData, bool bAllowRemoteActivation = false);
-
 protected:
     //~ Begin UActorComponent Interface
     virtual void BeginPlay() override;

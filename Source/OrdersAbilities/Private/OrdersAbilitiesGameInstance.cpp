@@ -1,7 +1,7 @@
-#include "RTSGameInstance.h"
+#include "OrdersAbilitiesGameInstance.h"
 #include "AbilitySystemGlobals.h"
 
-void URTSGameInstance::Init()
+void UOrdersAbilitiesGameInstance::Init()
 {
 	UGameInstance::Init();
 	

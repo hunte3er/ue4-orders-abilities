@@ -57,10 +57,6 @@ public:
     UFUNCTION(BlueprintCallable)
     void TransferOwnership(AActor* Actor, AController* NewOwner);
 
-	/** Actors to spawn for each player in the game. */
-	UFUNCTION(BlueprintNativeEvent)
-	void GetInitialActorsForPlayer(AController* Player, TArray<TSubclassOf<AActor>>& OutActors);
-	
 private:
     /** Number of AI players to spawn. */
     int32 NumAIPlayers;
