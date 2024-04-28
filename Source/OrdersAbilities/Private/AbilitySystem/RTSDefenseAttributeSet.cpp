@@ -54,7 +54,7 @@ void URTSDefenseAttributeSet::Init()
 	GetOwningAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(GetMaxHealthAttribute()).AddUObject(this, &URTSDefenseAttributeSet::OnMaxHealthChanged);
 }
 
-bool URTSDefenseAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const
+bool URTSDefenseAttributeSet::ShouldInitProperty(bool FirstInit, FProperty* PropertyToInit) const
 {
     // We do not want the health property to change when the attribute sets properties where initialized using a curve
     // table.

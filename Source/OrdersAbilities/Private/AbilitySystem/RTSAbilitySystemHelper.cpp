@@ -861,7 +861,7 @@ void URTSAbilitySystemHelper::GetRelationshipTagsFromPlayers(const ARTSPlayerSta
     {
         OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Friendly());
         OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_Visible());
-        if (ActorPlayerState->PlayerId == OtherPlayerState->PlayerId)
+        if (ActorPlayerState->GetPlayerId() == OtherPlayerState->GetPlayerId())
         {
             OutRelationshipTags.AddTag(URTSGlobalTags::Relationship_SamePlayer());
         }
@@ -1100,10 +1100,10 @@ TArray<FGameplayAttribute> URTSAbilitySystemHelper::FindGameplayAttributes()
         UClass* Class = *ClassIt;
         if (Class->IsChildOf(UAttributeSet::StaticClass()) && !Class->ClassGeneratedBy)
         {
-            for (TFieldIterator<UProperty> PropertyIt(Class, EFieldIteratorFlags::ExcludeSuper); PropertyIt;
+            for (TFieldIterator<FProperty> PropertyIt(Class, EFieldIteratorFlags::ExcludeSuper); PropertyIt;
                  ++PropertyIt)
             {
-                UProperty* Property = *PropertyIt;
+                FProperty* Property = *PropertyIt;
                 Attributes.Add(FGameplayAttribute(Property));
             }
         }
@@ -1312,7 +1312,7 @@ void URTSAbilitySystemHelper::ExecuteGameplayCueWithParamsUnattached(
 
 UAttributeSet* URTSAbilitySystemHelper::FindAttributeSetOfClass(UAbilitySystemComponent* AbilitySystem, const TSubclassOf<UAttributeSet> AttributeClass)
 {
-    for (UAttributeSet* Set : AbilitySystem->SpawnedAttributes)
+    for (UAttributeSet* Set : AbilitySystem->GetSpawnedAttributes())
     {
         if (Set && Set->IsA(AttributeClass))
         {

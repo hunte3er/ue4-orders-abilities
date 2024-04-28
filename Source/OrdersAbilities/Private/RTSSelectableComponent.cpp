@@ -59,14 +59,12 @@ void URTSSelectableComponent::BeginPlay()
         UE_LOG(LogRTS, Warning, TEXT("%s has no UCapsuleComponent and won't show selection circles."), *Owner->GetName());
     }
 
-	auto Meshes = GetOwner()->GetComponentsByClass(UMeshComponent::StaticClass());
-	for (UActorComponent* Mesh : Meshes)
+	TArray<UMeshComponent*> Meshes;
+	GetOwner()->GetComponents<UMeshComponent>(Meshes);
+	for (UMeshComponent* MeshComponent : Meshes)
 	{
-		if (UMeshComponent* MeshComponent = Cast<UMeshComponent>(Mesh))
-		{
-			MeshComponent->SetRenderCustomDepth(true);
-			MeshComponent->SetCustomDepthStencilValue(255);
-		}
+		MeshComponent->SetRenderCustomDepth(true);
+		MeshComponent->SetCustomDepthStencilValue(255);
 	}
 }
 

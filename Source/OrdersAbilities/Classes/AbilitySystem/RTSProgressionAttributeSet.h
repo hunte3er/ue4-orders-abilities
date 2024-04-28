@@ -34,7 +34,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSProgressionAttributeSet, Level)
 
 	UFUNCTION()
-	void OnRep_Level() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, Level); }
+	void OnRep_Level(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, Level, OldValue); }
 
     /** CurrentExp Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_CurrentExp)
@@ -42,7 +42,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSProgressionAttributeSet, CurrentExp)
 
     UFUNCTION()
-    void OnRep_CurrentExp() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, CurrentExp); }
+    void OnRep_CurrentExp(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, CurrentExp, OldValue); }
 
     /** ExpReward Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_ExpReward)
@@ -50,7 +50,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSProgressionAttributeSet, ExpReward)
 
 	UFUNCTION()
-	void OnRep_ExpReward() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, ExpReward); }
+	void OnRep_ExpReward(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, ExpReward, OldValue); }
 
     /** SkillPoints Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_SkillPoints)
@@ -58,7 +58,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSProgressionAttributeSet, SkillPoints)
 
     UFUNCTION()
-    void OnRep_SkillPoints() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, SkillPoints); }
+    void OnRep_SkillPoints(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, SkillPoints, OldValue); }
 
     /** StatPoints Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_StatPoints)
@@ -66,7 +66,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSProgressionAttributeSet, StatPoints)
 
     UFUNCTION()
-    void OnRep_StatPoints() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, StatPoints); }
+    void OnRep_StatPoints(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSProgressionAttributeSet, StatPoints, OldValue); }
 
     //~ Begin UAttributeSet Interface
     virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;

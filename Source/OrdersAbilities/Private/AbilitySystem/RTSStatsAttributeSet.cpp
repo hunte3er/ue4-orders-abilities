@@ -38,7 +38,7 @@ URTSStatsAttributeSet::URTSStatsAttributeSet()
 	IntGrowth = 1.0f;
 }
 
-bool URTSStatsAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const
+bool URTSStatsAttributeSet::ShouldInitProperty(bool FirstInit, FProperty* PropertyToInit) const
 {
     // We do not want the health property to change when the attribute sets properties where initialized using a curve
     // table.

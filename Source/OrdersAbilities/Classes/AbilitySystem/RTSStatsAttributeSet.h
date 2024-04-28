@@ -27,7 +27,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSStatsAttributeSet, Str)
 
 	UFUNCTION()
-	void OnRep_Str() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, Str); }
+	void OnRep_Str(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, Str, OldValue); }
 
     /** Dex Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_Dex)
@@ -35,7 +35,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSStatsAttributeSet, Dex)
 
     UFUNCTION()
-    void OnRep_Dex() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, Dex); }
+    void OnRep_Dex(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, Dex, OldValue); }
 
     /** Int Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_Int)
@@ -43,7 +43,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSStatsAttributeSet, Int)
 
 	UFUNCTION()
-	void OnRep_Int() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, Int); }
+	void OnRep_Int(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, Int, OldValue); }
 
     /** StrGrowth Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_StrGrowth)
@@ -51,7 +51,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSStatsAttributeSet, StrGrowth)
 
     UFUNCTION()
-    void OnRep_StrGrowth() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, StrGrowth); }
+    void OnRep_StrGrowth(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, StrGrowth, OldValue); }
 
     /** DexGrowth Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_DexGrowth)
@@ -59,7 +59,7 @@ public:
     ATTRIBUTE_ACCESSORS(URTSStatsAttributeSet, DexGrowth)
 
     UFUNCTION()
-    void OnRep_DexGrowth() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, DexGrowth); }
+    void OnRep_DexGrowth(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, DexGrowth, OldValue); }
 
     /** IntGrowth Attribute */
     UPROPERTY(BlueprintReadOnly, Category = "Attributes|Attack", ReplicatedUsing = OnRep_IntGrowth)
@@ -67,10 +67,10 @@ public:
     ATTRIBUTE_ACCESSORS(URTSStatsAttributeSet, IntGrowth)
 
     UFUNCTION()
-    void OnRep_IntGrowth() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, IntGrowth); }
+    void OnRep_IntGrowth(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSStatsAttributeSet, IntGrowth, OldValue); }
 
     //~ Begin UAttributeSet Interface
-    virtual bool ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const override;
+    virtual bool ShouldInitProperty(bool FirstInit, FProperty* PropertyToInit) const override;
     virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
     virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
     virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;

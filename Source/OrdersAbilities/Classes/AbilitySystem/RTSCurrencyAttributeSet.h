@@ -30,7 +30,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSCurrencyAttributeSet, Currency)
 
 	UFUNCTION()
-	void OnRep_Currency() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSCurrencyAttributeSet, Currency); }
+	void OnRep_Currency(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSCurrencyAttributeSet, Currency, OldValue); }
 
 	/** Income Attribute */
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Currency", ReplicatedUsing = OnRep_Currency)
@@ -38,7 +38,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSCurrencyAttributeSet, Income)
 	
 	UFUNCTION()
-	void OnRep_Income() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSCurrencyAttributeSet, Income); }
+	void OnRep_Income(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSCurrencyAttributeSet, Income, OldValue); }
 
     //~ Begin UAttributeSet Interface
     virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;

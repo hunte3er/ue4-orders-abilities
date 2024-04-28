@@ -490,7 +490,7 @@ void URTSAbilitySystemComponent::InitializeAttributes(int AttributeLevel, bool b
 		}
 	}
 
-    for (UAttributeSet* AttributeSet : SpawnedAttributes)
+    for (UAttributeSet* AttributeSet : GetSpawnedAttributes())
     {
         URTSAttributeSet* RTSAttributeSet = Cast<URTSAttributeSet>(AttributeSet);
         if (RTSAttributeSet != nullptr)
@@ -533,11 +533,12 @@ void URTSAbilitySystemComponent::InitializeAttributes(int AttributeLevel, bool b
 	// This is a work around for a bug that happens at least in the editor. It might be that the 'SpawnedAttributes'
 	// contains nullptr entries for some for some unknown reason. This has properly something to do with serialization.
 	// 'AttributeInitter->InitAttributeSetDefaults' will crash when the array contains a nullptr.
-	for (int32 i = SpawnedAttributes.Num() - 1; i >= 0; --i)
+    TArray<UAttributeSet*> SpawnedAttr = GetSpawnedAttributes();
+	for (int32 i = SpawnedAttr.Num() - 1; i >= 0; --i)
 	{
-		if (SpawnedAttributes[i] == nullptr)
+		if (SpawnedAttr[i] == nullptr)
 		{
-			SpawnedAttributes.RemoveAt(i);
+			RemoveSpawnedAttribute(SpawnedAttr[i]);
 		}
 	}
 
@@ -547,7 +548,7 @@ void URTSAbilitySystemComponent::InitializeAttributes(int AttributeLevel, bool b
 	// //
 	// AttributeInitter->InitAttributeSetDefaults(this, GroupName, AttributeLevel, bInitialInit);
  
-    for (UAttributeSet* AttributeSet : SpawnedAttributes)
+    for (UAttributeSet* AttributeSet : SpawnedAttr)
     {
         URTSAttributeSet* RTSAttributeSet = Cast<URTSAttributeSet>(AttributeSet);
         if (RTSAttributeSet != nullptr)

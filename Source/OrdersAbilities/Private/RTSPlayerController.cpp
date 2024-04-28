@@ -150,10 +150,10 @@ bool ARTSPlayerController::IssuePendingOrder(TArray<FHitResult>& HitResults)
 	// Check hit actors.
 	for (auto& HitResult : HitResults)
 	{
-		if (HitResult.Actor != nullptr)
+		if (HitResult.GetActor() != nullptr)
 		{
 			// Issue attack order.
-			FRTSOrderData OrderWithTarget = FRTSOrderData(PendingOrder.OrderType, PendingOrder.Index, HitResult.Actor.Get());
+			FRTSOrderData OrderWithTarget = FRTSOrderData(PendingOrder.OrderType, PendingOrder.Index, HitResult.GetActor());
 			FRTSOrderData OrderWithLocation = FRTSOrderData(PendingOrder.OrderType, PendingOrder.Index, FVector2D(HitResult.Location));
 
 			bool bSuccess = false;
@@ -217,7 +217,7 @@ bool ARTSPlayerController::DoesControllerOwnActor(AActor* Actor)
 		return false;
 	}
 
-	return ActorOwner->PlayerId == GetPlayerState()->PlayerId;
+	return ActorOwner->GetPlayerId() == GetPlayerState()->GetPlayerId();
 }
 
 void ARTSPlayerController::BeginPlay()
@@ -514,27 +514,27 @@ void ARTSPlayerController::IssueOrderTargetingObjects(TArray<FHitResult>& HitRes
 	// Get target location.
 	for (auto& HitResult : HitResults)
 	{
-		if (HitResult.Actor != nullptr)
+		if (HitResult.GetActor() != nullptr)
 		{
 			// Issue attack order.
-			if (IssueAttackOrder(HitResult.Actor.Get(), HitResult.Location))
+			if (IssueAttackOrder(HitResult.GetActor(), HitResult.Location))
 			{
 				return;
 			}
 			
 			// // Issue gather order.
-			// if (IssueGatherOrder(HitResult.Actor.Get()))
+			// if (IssueGatherOrder(HitResult.GetActor()))
 			// {
 			// 	return;
 			// }
 			//
 			// // Issue construct order.
-			// if (IssueContinueConstructionOrder(HitResult.Actor.Get()))
+			// if (IssueContinueConstructionOrder(HitResult.GetActor()))
 			// {
 			// 	return;
 			// }
 
-            // ALandscape* Landscape = Cast<ALandscape>(HitResult.Actor.Get());
+            // ALandscape* Landscape = Cast<ALandscape>(HitResult.GetActor());
             //
             // if (Landscape != nullptr)
             // {
@@ -543,7 +543,7 @@ void ARTSPlayerController::IssueOrderTargetingObjects(TArray<FHitResult>& HitRes
             // return;
             // }
 
-			if (IssueMoveOrder(HitResult.Actor.Get(), HitResult.Location))
+			if (IssueMoveOrder(HitResult.GetActor(), HitResult.Location))
 			{
 				return;
 			}
@@ -943,7 +943,7 @@ void ARTSPlayerController::FinishSelectActors()
 
     for (auto& HitResult : HitResults)
     {
-		if (!IsSelectableActor(HitResult.Actor.Get()))
+		if (!IsSelectableActor(HitResult.GetActor()))
 		{
 			continue;
 		}
@@ -951,32 +951,32 @@ void ARTSPlayerController::FinishSelectActors()
 		// Check how to apply selection.
 		if (bToggleSelectionHotkeyPressed)
 		{
-			if (SelectedActors.Contains(HitResult.Actor))
+			if (SelectedActors.Contains(HitResult.GetActor()))
 			{
 				// Deselect actor.
-				ActorsToSelect.Remove(HitResult.Actor.Get());
+				ActorsToSelect.Remove(HitResult.GetActor());
 
-				UE_LOG(LogRTS, Log, TEXT("Deselected actor %s."), *HitResult.Actor->GetName());
+				UE_LOG(LogRTS, Log, TEXT("Deselected actor %s."), *HitResult.GetActor()->GetName());
 			}
-			else if (!ActorsToSelect.Contains(HitResult.Actor))
+			else if (!ActorsToSelect.Contains(HitResult.GetActor()))
 			{
 				// Select actor.
-				ActorsToSelect.Add(HitResult.Actor.Get());
+				ActorsToSelect.Add(HitResult.GetActor());
 
-				UE_LOG(LogRTS, Log, TEXT("Selected actor %s."), *HitResult.Actor->GetName());
+				UE_LOG(LogRTS, Log, TEXT("Selected actor %s."), *HitResult.GetActor()->GetName());
 			}
 		}
 		else
 		{
-			if (ActorsToSelect.Contains(HitResult.Actor))
+			if (ActorsToSelect.Contains(HitResult.GetActor()))
 			{
 				continue;
 			}
 
 			// Select actor.
-			ActorsToSelect.Add(HitResult.Actor.Get());
+			ActorsToSelect.Add(HitResult.GetActor());
 
-			UE_LOG(LogRTS, Log, TEXT("Selected actor %s."), *HitResult.Actor->GetName());
+			UE_LOG(LogRTS, Log, TEXT("Selected actor %s."), *HitResult.GetActor()->GetName());
 		}
     }
 
@@ -1172,14 +1172,14 @@ void ARTSPlayerController::PlayerTick(float DeltaTime)
 		for (auto& HitResult : HitResults)
 		{
 			// Check if hit any actor.
-			if (HitResult.Actor == nullptr || Cast<ALandscape>(HitResult.Actor.Get()) != nullptr)
+			if (HitResult.GetActor() == nullptr || Cast<ALandscape>(HitResult.GetActor()) != nullptr)
 			{
 				// Store hovered world position.
 				HoveredWorldPosition = HitResult.Location;
 			}
 			
 			// Check if hit selectable actor.
-			auto SelectableComponent = HitResult.Actor->FindComponentByClass<URTSSelectableComponent>();
+			auto SelectableComponent = HitResult.GetActor()->FindComponentByClass<URTSSelectableComponent>();
 
 			if (!SelectableComponent)
 			{
@@ -1188,7 +1188,7 @@ void ARTSPlayerController::PlayerTick(float DeltaTime)
 			}
 
 			// Set hovered actor.
-			HoveredActor = HitResult.Actor.Get();
+			HoveredActor = HitResult.GetActor();
 		}
 	}
 

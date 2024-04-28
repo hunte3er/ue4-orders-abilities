@@ -116,9 +116,9 @@ FVector URTSUtilities::GetGroundLocation(UObject* WorldContextObject, FVector Lo
 
     for (auto& HitResult : HitResults)
     {
-        if (HitResult.Actor != nullptr)
+        if (HitResult.GetActor() != nullptr)
         {
-            ALandscape* Landscape = Cast<ALandscape>(HitResult.Actor.Get());
+            ALandscape* Landscape = Cast<ALandscape>(HitResult.GetActor());
 
             if (Landscape != nullptr)
             {
@@ -149,7 +149,7 @@ bool URTSUtilities::IsAIUnit(AActor* Actor)
         return false;
     }
 
-    return OwnerComponent->GetPlayerOwner() && OwnerComponent->GetPlayerOwner()->bIsABot;
+    return OwnerComponent->GetPlayerOwner() && OwnerComponent->GetPlayerOwner()->IsABot();
 }
 
 // bool URTSUtilities::IsReadyToUse(AActor* Actor)

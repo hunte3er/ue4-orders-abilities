@@ -225,7 +225,7 @@ void URTSAutoOrderComponent::OnOwnerChanged(APlayerState* PreviousOwner, APlayer
     bool bHasAutoCastOrders = false;
 
     // For AI players
-    if (NewOwner->bIsABot)
+    if (NewOwner->IsABot())
     {
         // Every ability is an auto cast ability for AI players.
         bHasAutoCastOrders = Orders.Num() > 0;

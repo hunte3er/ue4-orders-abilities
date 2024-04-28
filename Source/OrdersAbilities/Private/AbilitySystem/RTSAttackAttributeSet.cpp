@@ -40,7 +40,7 @@ URTSAttackAttributeSet::URTSAttackAttributeSet()
     CooldownReduction = 0.0f;
 }
 
-bool URTSAttackAttributeSet::ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const
+bool URTSAttackAttributeSet::ShouldInitProperty(bool FirstInit, FProperty* PropertyToInit) const
 {
     // We do not want the health property to change when the attribute sets properties where initialized using a curve
     // table.

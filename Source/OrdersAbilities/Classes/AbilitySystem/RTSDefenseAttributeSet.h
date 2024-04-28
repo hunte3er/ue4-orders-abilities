@@ -32,7 +32,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSDefenseAttributeSet, Damage)
 
 	UFUNCTION()
-	void OnRep_Damage() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, Damage); }
+	void OnRep_Damage(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, Damage, OldValue); }
 
 	/** Health Attribute */
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Defense", ReplicatedUsing = OnRep_Health)
@@ -40,7 +40,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSDefenseAttributeSet, Health)
 
 	UFUNCTION()
-	void OnRep_Health() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, Health); }
+	void OnRep_Health(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, Health, OldValue); }
 
 	/** Max Health Attribute */
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Defense", ReplicatedUsing = OnRep_MaxHealth)
@@ -48,7 +48,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSDefenseAttributeSet, MaxHealth)
 
 	UFUNCTION()
-	void OnRep_MaxHealth() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, MaxHealth); }
+	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, MaxHealth, OldValue); }
 
 	/** PhysicalArmor Attribute */
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Defense", ReplicatedUsing = OnRep_PhysicalArmor)
@@ -56,7 +56,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSDefenseAttributeSet, PhysicalArmor)
 
 	UFUNCTION()
-	void OnRep_PhysicalArmor() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, PhysicalArmor); }
+	void OnRep_PhysicalArmor(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, PhysicalArmor, OldValue); }
 
 	/** MagicalArmor Attribute */
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Defense", ReplicatedUsing = OnRep_MagicalArmor)
@@ -64,7 +64,7 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSDefenseAttributeSet, MagicalArmor)
 
 	UFUNCTION()
-	void OnRep_MagicalArmor() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, MagicalArmor); }
+	void OnRep_MagicalArmor(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, MagicalArmor, OldValue); }
 
 	/** IncomingDamageMultiplier Attribute */
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Defense", ReplicatedUsing = OnRep_IncomingDamageMultiplier)
@@ -72,10 +72,10 @@ public:
 	ATTRIBUTE_ACCESSORS(URTSDefenseAttributeSet, IncomingDamageMultiplier)
 
 	UFUNCTION()
-	void OnRep_IncomingDamageMultiplier() { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, IncomingDamageMultiplier); }
+	void OnRep_IncomingDamageMultiplier(const FGameplayAttributeData& OldValue) { GAMEPLAYATTRIBUTE_REPNOTIFY(URTSDefenseAttributeSet, IncomingDamageMultiplier, OldValue); }
 
     //~ Begin UAttributeSet Interface
-    virtual bool ShouldInitProperty(bool FirstInit, UProperty* PropertyToInit) const override;
+    virtual bool ShouldInitProperty(bool FirstInit, FProperty* PropertyToInit) const override;
     virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
     virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
